@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="글로벌 주요 증시 및 한/미 섹터 분석 웹사이트">
+    <title>Tony's Stock Today | 글로벌 증시 인사이트</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-bg-glow app-bg-glow-1"></div>
+    <div class="app-bg-glow app-bg-glow-2"></div>
+    
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <h1>Tony's Stock Today</h1>
+            </div>
+            <div class="header-right">
+                <div class="last-updated">
+                    <span class="pulse-dot"></span>
+                    <span id="base-date-display">Live Data</span>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <!-- 1. 글로벌 주요 증시 현황 -->
+            <section class="dashboard-section" id="market-overview-section">
+                <div class="section-header">
+                    <h2 id="market-title">글로벌 주요 증시 현황</h2>
+                    <p>대표적인 글로벌 지수의 국가별 현황 및 등락률</p>
+                </div>
+                <div id="market-overview-container">
+                    <!-- JS Injected (Grouped by Country) -->
+                </div>
+            </section>
+
+            <!-- 2. 한/미 섹터별 등락 -->
+            <section class="dashboard-section" id="sector-performance-section">
+                <div class="section-header">
+                    <h2 id="sector-title">섹터별 성과 분석 (대표 ETF 기준)</h2>
+                    <p>전체 산업 섹터별 대표 ETF의 세부 등락률</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <div class="column glass-card">
+                        <div class="column-header">
+                            <span class="flag">🇺🇸</span>
+                            <h3>미국 핵심 섹터 (SPDR)</h3>
+                        </div>
+                        <div class="table-container">
+                            <table id="us-sectors-table" class="data-table">
+                                <!-- JS Injected -->
+                            </table>
+                        </div>
+                    </div>
+                    <div class="column glass-card">
+                        <div class="column-header">
+                            <span class="flag">🇰🇷</span>
+                            <h3>한국 핵심 섹터 (KODEX)</h3>
+                        </div>
+                        <div class="table-container">
+                            <table id="kr-sectors-table" class="data-table">
+                                <!-- JS Injected -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 섹터별 대표 기업 등락 -->
+            <section class="dashboard-section" id="company-performance-section">
+                <div class="section-header">
+                    <h2>🏢 섹터별 주요 대표 기업 현황</h2>
+                    <p>테크, 금융, 자동차 핵심 3개 섹터의 주요 5개 기업 변동성</p>
+                </div>
+                <div id="companies-container">
+                    <!-- JS Injected (Grouped by Sector) -->
+                </div>
+            </section>
+
+            <!-- 4. 글로벌 증시 주요 뉴스 -->
+            <section class="dashboard-section" id="news-section">
+                <div class="section-header">
+                    <h2>📰 Market Briefings</h2>
+                    <p>전 세계 증시 주요 핫이슈 및 금융 동향 요약</p>
+                </div>
+                <div id="news-container" class="news-list">
+                    <!-- JS Injected -->
+                </div>
+            </section>
+
+            <!-- 5. 주요 인사 발언 -->
+            <section class="dashboard-section" id="quotes-section">
+                <div class="section-header">
+                    <h2>👔 Leaders' Perspectives</h2>
+                    <p>시장 흐름을 이끄는 주요 인사들의 최근 발언</p>
+                </div>
+                <div id="quotes-container" class="quotes-grid">
+                    <!-- JS Injected -->
+                </div>
+            </section>
+
+            <!-- 6. 유튜브 인사이트 -->
+            <section class="dashboard-section" id="youtube-section">
+                <div class="section-header">
+                    <h2 style="color: #fca5a5;">▶️ YouTube Insights</h2>
+                    <p>국내외 탑급 경제 유튜버들의 시장 분석 및 동향 요약 브리핑</p>
+                </div>
+                <div id="youtube-container" class="news-list">
+                    <!-- JS Injected -->
+                </div>
+            </section>
+        </main>
+        
+        <footer class="app-footer">
+            <p>&copy; <span id="current-year">2026</span> Tony's Stock Today.</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/components.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

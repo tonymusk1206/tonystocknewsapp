@@ -1,0 +1,521 @@
+/* 최하단에 새로운 스타일 추가. 이전의 스타일들은 그대로 덮어쓰지 않고 병합된 상태여야 하지만, 이 write_to_file은 덮어쓰기이므로 전체를 다시 작성합니다. */
+
+:root {
+    /* Color Palette */
+    --bg-dark: #0a0b10;
+    --bg-card: rgba(20, 22, 31, 0.45);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-highlight: rgba(255, 255, 255, 0.15);
+    
+    --text-primary: #ffffff;
+    --text-secondary: #9da3b4;
+    --text-muted: #5e667b;
+    
+    /* Neon Accents */
+    --accent-up: #10b981;
+    --accent-up-bg: rgba(16, 185, 129, 0.15);
+    --accent-up-glow: rgba(16, 185, 129, 0.3);
+    
+    --accent-down: #ef4444;
+    --accent-down-bg: rgba(239, 68, 68, 0.15);
+    --accent-down-glow: rgba(239, 68, 68, 0.3);
+    
+    --accent-brand: #3b82f6;
+    --accent-brand-glow: rgba(59, 130, 246, 0.4);
+
+    /* Typography */
+    --font-sans: 'Inter', sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+
+    /* Transitions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    background-image: 
+        linear-gradient(to bottom, rgba(5, 6, 8, 0.82), rgba(0, 0, 0, 0.98)), 
+        url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Background Glow Effects */
+.app-bg-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: 0;
+    opacity: 0.4;
+    animation: drift 20s infinite alternate ease-in-out;
+}
+
+.app-bg-glow-1 {
+    top: -10%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--accent-brand-glow), transparent);
+}
+
+.app-bg-glow-2 {
+    bottom: -10%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, var(--accent-up-glow), transparent);
+    animation-delay: -10s;
+}
+
+@keyframes drift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+.app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+h2 {
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+.section-header p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Header */
+.glass-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, var(--accent-brand), #8b5cf6);
+    border-radius: 6px;
+    box-shadow: 0 0 15px var(--accent-brand-glow);
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(to right, #fff, #9da3b4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.last-updated {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--accent-up);
+    background: var(--accent-up-bg);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-up);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-up);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Dashboard Sections */
+.dashboard-section {
+    margin-bottom: 4rem;
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+/* Region & Sector Titles */
+.region-title {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: #e2e8f0;
+}
+
+/* Glassmorphism Utilities */
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: var(--transition-base);
+}
+
+.glass-card:hover {
+    border-color: var(--border-highlight);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+}
+
+/* Common Layouts */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 1.5rem;
+}
+
+.dual-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+/* Data Tables */
+.table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.data-table th {
+    text-align: center;
+    padding: 12px 8px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+}
+
+.data-table th:first-child, .data-table td:first-child {
+    text-align: left;
+}
+
+.data-table td {
+    padding: 14px 8px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: var(--transition-fast);
+    white-space: nowrap; /* Prevent wrapped tables */
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Values */
+.val-up { color: var(--accent-up); }
+.val-down { color: var(--accent-down); }
+.val-neutral { color: var(--text-secondary); }
+
+/* Component specifics */
+.column-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.flag { font-size: 1.5rem; }
+
+.ticker-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ticker-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+}
+
+/* UI Cards */
+.company-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.company-info .c-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.company-info .c-sector {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.05);
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-top: 4px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.company-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.metric-box {
+    background: rgba(0,0,0,0.25);
+    padding: 8px 4px;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 64px;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+.metric-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.metric-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.metric-value.highlight {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.metric-pct {
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.metric-hist-price {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+/* News List */
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.news-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: var(--transition-base);
+}
+
+.news-item:hover {
+    border-color: var(--accent-brand);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.news-item:hover h3 {
+    color: var(--accent-brand);
+}
+
+/* Quotes Grid */
+.quotes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.quote-card {
+    position: relative;
+    padding: 2rem;
+}
+
+.quote-card:hover {
+    border-color: var(--accent-brand);
+}
+
+.quote-icon {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    font-size: 2.5rem;
+    color: var(--border-highlight);
+    font-family: serif;
+    line-height: 1;
+}
+
+.quote-text {
+    font-size: 1.1rem;
+    font-style: italic;
+    margin: 1.5rem 0;
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.quote-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.author-info strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #fff;
+}
+
+.author-info span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Responsive */
+/* Responsive Updates */
+@media (max-width: 1400px) {
+    .grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    }
+}
+
+@media (max-width: 1200px) {
+    .grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .dual-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        padding: 0 15px;
+    }
+    
+    .company-metrics {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .metric-box {
+        min-height: 70px;
+    }
+    
+    .news-item {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .news-item > div:first-child {
+        flex: none !important;
+        height: 180px;
+    }
+    
+    .quotes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    .glass-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+}
