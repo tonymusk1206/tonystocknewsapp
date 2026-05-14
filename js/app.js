@@ -27,8 +27,13 @@ async function fetchMarketData() {
     `;
     
     try {
-        console.log("Fetching from: /api/market-data");
-        const res = await fetch('/api/market-data');
+        // 안드로이드 WebView 내부에서 상대 경로 파싱 에러 방지를 위해 절대 경로 우선 적용
+        const apiUrl = window.location.origin.includes('http') 
+            ? `${window.location.origin}/api/market-data`
+            : 'https://tony-stock-news.onrender.com/api/market-data';
+            
+        console.log("Fetching from:", apiUrl);
+        const res = await fetch(apiUrl);
         
         if (!res.ok) {
             throw new Error(`서버 응답 오류 (HTTP ${res.status}) - 서버가 아직 준비되지 않았거나 경로가 잘못되었습니다.`);
