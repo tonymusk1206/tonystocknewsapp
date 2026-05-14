@@ -48,13 +48,13 @@ function createMarketCard(market) {
                         </span>
                     </div>
                 </div>
-                ${renderMetric('1일전', mockData.dates.d1, market.changes.d1)}
-                ${renderMetric('3일전', mockData.dates.d3, market.changes.d3)}
-                ${renderMetric('1주전', mockData.dates.w1, market.changes.w1)}
-                ${renderMetric('1달전', mockData.dates.m1, market.changes.m1)}
-                ${renderMetric('3달전', mockData.dates.m3, market.changes.m3)}
-                ${renderMetric('6달전', mockData.dates.m6, market.changes.m6)}
-                ${renderMetric('1년전', mockData.dates.y1, market.changes.y1)}
+                ${renderMetric('1일전比', mockData.dates.d1, market.changes.d1)}
+                ${renderMetric('3일전比', mockData.dates.d3, market.changes.d3)}
+                ${renderMetric('1주전比', mockData.dates.w1, market.changes.w1)}
+                ${renderMetric('1달전比', mockData.dates.m1, market.changes.m1)}
+                ${renderMetric('3달전比', mockData.dates.m3, market.changes.m3)}
+                ${renderMetric('6달전比', mockData.dates.m6, market.changes.m6)}
+                ${renderMetric('1년전比', mockData.dates.y1, market.changes.y1)}
             </div>
         </div>
     `;
@@ -130,13 +130,13 @@ function createSectorTableHTML(sectors) {
             <tr>
                 <th>자산 (ETF)</th>
                 <th>현재가<br/>(${mockData.dates.current})</th>
-                <th>1일전<br/>(${mockData.dates.d1})</th>
-                <th>3일전<br/>(${mockData.dates.d3})</th>
-                <th>1주전<br/>(${mockData.dates.w1})</th>
-                <th>1달전<br/>(${mockData.dates.m1})</th>
-                <th>3달전<br/>(${mockData.dates.m3})</th>
-                <th>6달전<br/>(${mockData.dates.m6})</th>
-                <th>1년전<br/>(${mockData.dates.y1})</th>
+                <th>1일전比<br/>(${mockData.dates.d1})</th>
+                <th>3일전比<br/>(${mockData.dates.d3})</th>
+                <th>1주전比<br/>(${mockData.dates.w1})</th>
+                <th>1달전比<br/>(${mockData.dates.m1})</th>
+                <th>3달전比<br/>(${mockData.dates.m3})</th>
+                <th>6달전比<br/>(${mockData.dates.m6})</th>
+                <th>1년전比<br/>(${mockData.dates.y1})</th>
             </tr>
         </thead>
         <tbody>
@@ -183,13 +183,13 @@ function createCompanyCard(company) {
                         </span>
                     </div>
                 </div>
-                ${renderMetric('1일전', mockData.dates.d1, company.changes.d1)}
-                ${renderMetric('3일전', mockData.dates.d3, company.changes.d3)}
-                ${renderMetric('1주전', mockData.dates.w1, company.changes.w1)}
-                ${renderMetric('1개월전', mockData.dates.m1, company.changes.m1)}
-                ${renderMetric('3개월전', mockData.dates.m3, company.changes.m3)}
-                ${renderMetric('6개월전', mockData.dates.m6, company.changes.m6)}
-                ${renderMetric('1년전', mockData.dates.y1, company.changes.y1)}
+                ${renderMetric('1일전比', mockData.dates.d1, company.changes.d1)}
+                ${renderMetric('3일전比', mockData.dates.d3, company.changes.d3)}
+                ${renderMetric('1주전比', mockData.dates.w1, company.changes.w1)}
+                ${renderMetric('1개월전比', mockData.dates.m1, company.changes.m1)}
+                ${renderMetric('3개월전比', mockData.dates.m3, company.changes.m3)}
+                ${renderMetric('6개월전比', mockData.dates.m6, company.changes.m6)}
+                ${renderMetric('1년전比', mockData.dates.y1, company.changes.y1)}
             </div>
         </div>
     `;

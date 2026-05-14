@@ -17,7 +17,7 @@ CACHE_DURATION = 300 # 5분
 
 def calculate_changes(hist, current_close):
     try:
-        if len(hist) < 2: return {k: {"pct": 0, "raw_price": 0} for k in ["d1", "d3", "w1", "m1", "m3", "m6", "y1"]}
+        if len(hist) < 2: return {k: {"pct": 0, "raw_price": 0} for k in ["today", "d1", "d3", "w1", "m1", "m3", "m6", "y1"]}
         
         def get_data(days_ago):
             idx = min(days_ago, len(hist)-1)
@@ -25,10 +25,13 @@ def calculate_changes(hist, current_close):
             if old_price == 0: return {"pct": 0, "raw_price": 0}
             pct = round(((current_close - old_price) / old_price) * 100, 2)
             return {"pct": pct, "raw_price": old_price}
-            
+        
+        # today = 전일 종가(hist[-1]) 대비 현재 실시간 가격(current_close) 변화율
+        # current_close가 실시간 가격이면 정확한 "전일비" 표시
+        # d1도 동일 기준이지만, today는 현재가 옆 메인 등락률 역할
         return {
-            "today": get_data(1),
-            "d1": get_data(1),
+            "today": get_data(1),   # 전일 종가 대비 현재가 (전일비)
+            "d1": get_data(1),      # 1거래일 전 종가 대비
             "d3": get_data(3),
             "w1": get_data(5),
             "m1": get_data(21),
@@ -145,6 +148,39 @@ def market_data():
             print("Warning: All ticker downloads failed.")
             data = pd.DataFrame()
 
+        # ▶ 실시간 현재가 별도 조회 (1분봉, 오늘 장중 데이터)
+        # yfinance 무료 플랜 기준 약 15분 지연이 있지만 일별 종가보다 훨씬 최신
+        realtime_prices = {}
+        try:
+            print("Fetching real-time prices (1m interval)...")
+            rt_batch_size = 20
+            for i in range(0, len(unique_tickers), rt_batch_size):
+                rt_batch = unique_tickers[i:i+rt_batch_size]
+                try:
+                    rt_data = yf.download(
+                        rt_batch, period="1d", interval="1m",
+                        group_by="ticker", threads=True, progress=False, timeout=15
+                    )
+                    if not rt_data.empty:
+                        for t_sym in rt_batch:
+                            try:
+                                if len(rt_batch) == 1:
+                                    # 단일 티커일 때는 MultiIndex 없음
+                                    rt_hist = rt_data.dropna(subset=['Close'])
+                                else:
+                                    if t_sym not in rt_data.columns.get_level_values(0):
+                                        continue
+                                    rt_hist = rt_data[t_sym].dropna(subset=['Close'])
+                                if not rt_hist.empty:
+                                    realtime_prices[t_sym] = float(rt_hist['Close'].iloc[-1])
+                            except Exception as e:
+                                print(f"  RT parse error {t_sym}: {e}")
+                except Exception as e:
+                    print(f"  RT batch failed {rt_batch}: {e}")
+            print(f"Real-time prices fetched: {len(realtime_prices)} tickers")
+        except Exception as e:
+            print(f"Real-time fetch failed entirely: {e}")
+
         # 기준일 처리용 (S&P 500 기준)
         spx_sym = "^GSPC"
         spx_hist = None
@@ -165,7 +201,12 @@ def market_data():
                 hist = data[t_sym].dropna(subset=['Close'])
                 if hist.empty: return {"value": "N/A", "changes": empty_changes}
                 
-                current_close = float(hist['Close'].iloc[-1])
+                # 실시간 가격 우선 사용, 없으면 일별 종가 fallback
+                daily_close = float(hist['Close'].iloc[-1])
+                current_close = realtime_prices.get(t_sym, daily_close)
+                # 실시간 조회 성공 여부 로그
+                if t_sym in realtime_prices:
+                    print(f"  [{t_sym}] RT: {current_close:.4f} / Daily: {daily_close:.4f}")
                 
                 def format_price(p):
                     if p == "N/A" or p == 0: return "N/A"
