@@ -202,42 +202,48 @@ def get_youtube_insights():
     ]
     
     videos = []
-    ns = {
-        'atom': 'http://www.w3.org/2005/Atom',
-        'media': 'http://search.yahoo.com/mrss/',
-        'yt': 'http://www.youtube.com/xml/schemas/2015'
-    }
-    
     for ch in channels:
         url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
-        root = fetch_rss(url, timeout=5)
-        if root is not None:
-            # 가장 최신 영상 1개 추출
-            entry = root.find('.//atom:entry', ns)
-            if entry is not None:
-                title = entry.findtext('atom:title', '', ns)
-                link = entry.find('atom:link', ns)
-                link_href = link.attrib['href'] if link is not None else f"https://www.youtube.com/channel/{ch['id']}"
+        success = False
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                xml_data = response.read().decode('utf-8')
                 
-                # 썸네일
-                video_id = entry.findtext('yt:videoId', '', ns)
-                thumb = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg" if video_id else ch['img']
-                
-                videos.append({
-                    "title": title,
-                    "channel": ch['name'],
-                    "summary": f"{ch['name']} 채널의 실시간 최신 분석 영상입니다.",
-                    "date": datetime.now().strftime("%Y.%m.%d"),
-                    "link": link_href,
-                    "image": thumb
-                })
-        
-        # 만약 실패 시 기본 구조 삽입
-        if len(videos) < len(channels) and not any(v['channel'] == ch['name'] for v in videos):
+                # 첫 번째 <entry> 블록 추출 (가장 최신 영상)
+                entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
+                if entry_match:
+                    entry_text = entry_match.group(1)
+                    
+                    # 제목 추출
+                    title_match = re.search(r'<title>(.*?)</title>', entry_text)
+                    title = title_match.group(1) if title_match else ""
+                    
+                    # videoId 추출
+                    vid_match = re.search(r'<yt:videoId>(.*?)</yt:videoId>', entry_text)
+                    video_id = vid_match.group(1) if vid_match else ""
+                    
+                    if title and video_id:
+                        # CDATA 및 HTML 엔티티 제거
+                        title = title.replace('<![CDATA[', '').replace(']]>', '').strip()
+                        videos.append({
+                            "title": title,
+                            "channel": ch['name'],
+                            "summary": f"{ch['name']} 채널의 실시간 최신 분석 영상입니다.",
+                            "date": datetime.now().strftime("%Y.%m.%d"),
+                            "link": f"https://www.youtube.com/watch?v={video_id}",
+                            "image": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+                        })
+                        success = True
+        except Exception as e:
+            print(f"YouTube parse error for {ch['name']}: {e}")
+            
+        # 실패 시에만 안전장치 가동
+        if not success:
             videos.append({
-                "title": f"{ch['name']} 라이브 금융 & 증시 집중 브리핑",
+                "title": f"{ch['name']} 실시간 경제/증시 집중 브리핑",
                 "channel": ch['name'],
-                "summary": f"{ch['name']} 채널의 실시간 인사이트를 연동 중입니다.",
+                "summary": f"{ch['name']} 채널의 실시간 피드를 갱신 중입니다.",
                 "date": datetime.now().strftime("%Y.%m.%d"),
                 "link": f"https://www.youtube.com/channel/{ch['id']}",
                 "image": ch['img']
