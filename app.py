@@ -271,7 +271,7 @@ def get_dynamic_quotes():
     for ld in leaders:
         enc_q = urllib.parse.quote(ld['query'])
         url = f"https://news.google.com/rss/search?q={enc_q}&hl=ko&gl=KR&ceid=KR:ko"
-        n_items = parse_google_news(url, max_items=1)
+        n_items = parse_google_news_verified(url, required_count=1)
         
         quote_text = f"\"{ld['author']}의 경제 및 산업 생태계에 대한 통찰력과 장기적 비전 전략에 주목하십시오.\""
         link_href = f"https://www.google.com/search?q={urllib.parse.quote(ld['author'])}"
