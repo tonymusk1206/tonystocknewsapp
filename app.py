@@ -4,6 +4,11 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 import time
+import urllib.request
+import urllib.parse
+import xml.etree.ElementTree as ET
+import re
+import threading
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 CORS(app)
@@ -41,6 +46,233 @@ def calculate_changes(hist, current_close):
         }
     except:
         return {k: {"pct": 0, "raw_price": 0} for k in ["today", "d1", "d3", "w1", "m1", "m3", "m6", "y1"]}
+
+# ── 실시간 뉴스 & 유튜브 RSS 파싱 엔진 ──
+def fetch_rss(url, timeout=10):
+    try:
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return ET.fromstring(response.read())
+    except Exception as e:
+        print(f"RSS fetch error for {url}: {e}")
+        return None
+
+def clean_html(raw_html):
+    cleanr = re.compile('<.*?>')
+    cleantext = re.sub(cleanr, '', raw_html)
+    return cleantext.strip()
+
+def parse_google_news(url, max_items=10):
+    root = fetch_rss(url)
+    items = []
+    if root is None: return items
+    
+    for item in root.findall('.//item')[:max_items]:
+        title = item.findtext('title', '')
+        link = item.findtext('link', '')
+        pub_date = item.findtext('pubDate', '')
+        
+        # 출처 및 제목 분리 (구글 뉴스는 주로 "제목 - 출처" 형태)
+        source = "Google News"
+        if " - " in title:
+            parts = title.rsplit(" - ", 1)
+            title = parts[0]
+            source = parts[1]
+            
+        # 날짜 간소화
+        date_str = datetime.now().strftime("%Y.%m.%d")
+        try:
+            # 예: Thu, 14 May 2026 12:00:00 GMT
+            pd_parsed = datetime.strptime(pub_date[5:25].strip(), "%d %b %Y %H:%M")
+            date_str = pd_parsed.strftime("%Y.%m.%d")
+        except:
+            pass
+            
+        items.append({
+            "title": title,
+            "summary": title, # 구글 뉴스 RSS 요약은 HTML 태그가 많으므로 제목으로 대체
+            "source": source,
+            "date": date_str,
+            "time": "실시간",
+            "link": link,
+            "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" # 기본 금융 이미지
+        })
+    return items
+
+def get_top10_news():
+    # 글로벌 경제 주요 뉴스 RSS
+    url = "https://news.google.com/rss/search?q=증시+경제+금융+주식&hl=ko&gl=KR&ceid=KR:ko"
+    news_list = parse_google_news(url, max_items=10)
+    # 만약 수집 실패 시 기본 데이터 반환
+    if not news_list:
+        return [
+            { "title": "글로벌 증시 주요 경제 지표 발표에 촉각... 월가 매크로 분석 활발", "summary": "Fed의 향후 금리 정책과 기업 실적 시즌을 앞두고 자금 이동이 가속화됩니다.", "source": "연합인포맥스", "date": datetime.now().strftime("%Y.%m.%d"), "time": "1시간 전", "link": "https://finance.yahoo.com", "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" }
+        ]
+    return news_list
+
+def get_keyword_news(keywords):
+    keyword_data = []
+    for kw in keywords:
+        enc_kw = urllib.parse.quote(f"{kw} 주식")
+        url = f"https://news.google.com/rss/search?q={enc_kw}&hl=ko&gl=KR&ceid=KR:ko"
+        k_news = parse_google_news(url, max_items=3)
+        keyword_data.append({
+            "keyword": kw,
+            "news": k_news
+        })
+    return keyword_data
+
+def get_youtube_insights():
+    channels = [
+        {"name": "슈카월드", "id": "UCsJ6RuBiTVWRX156FVbeaGg", "img": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80"},
+        {"name": "삼프로TV", "id": "UChbqbQB09zM4YwLIfk35Nzw", "img": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80"},
+        {"name": "소수몽키", "id": "UCb5iL51DrmB_qN6Wc3Gj04Q", "img": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80"},
+        {"name": "월가아재", "id": "UC-w3l14sA0t9P-eXm71lE_A", "img": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"},
+        {"name": "수페TV", "id": "UCYp6Xj6o1k4aA4o7z7yEGEw", "img": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&q=80"}
+    ]
+    
+    videos = []
+    ns = {
+        'atom': 'http://www.w3.org/2005/Atom',
+        'media': 'http://search.yahoo.com/mrss/',
+        'yt': 'http://www.youtube.com/xml/schemas/2015'
+    }
+    
+    for ch in channels:
+        url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
+        root = fetch_rss(url, timeout=5)
+        if root is not None:
+            # 가장 최신 영상 1개 추출
+            entry = root.find('.//atom:entry', ns)
+            if entry is not None:
+                title = entry.findtext('atom:title', '', ns)
+                link = entry.find('atom:link', ns)
+                link_href = link.attrib['href'] if link is not None else f"https://www.youtube.com/channel/{ch['id']}"
+                
+                # 썸네일
+                video_id = entry.findtext('yt:videoId', '', ns)
+                thumb = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg" if video_id else ch['img']
+                
+                videos.append({
+                    "title": title,
+                    "channel": ch['name'],
+                    "summary": f"{ch['name']} 채널의 실시간 최신 분석 영상입니다.",
+                    "date": datetime.now().strftime("%Y.%m.%d"),
+                    "link": link_href,
+                    "image": thumb
+                })
+        
+        # 만약 실패 시 기본 구조 삽입
+        if len(videos) < len(channels) and not any(v['channel'] == ch['name'] for v in videos):
+            videos.append({
+                "title": f"{ch['name']} 라이브 금융 & 증시 집중 브리핑",
+                "channel": ch['name'],
+                "summary": f"{ch['name']} 채널의 실시간 인사이트를 연동 중입니다.",
+                "date": datetime.now().strftime("%Y.%m.%d"),
+                "link": f"https://www.youtube.com/channel/{ch['id']}",
+                "image": ch['img']
+            })
+            
+    return videos
+
+def get_dynamic_quotes():
+    # 10명의 인물 리스트별 실시간 최신 뉴스 제목을 파싱하여 코멘트로 제공
+    leaders = [
+        {"author": "Jerome Powell", "role": "Federal Reserve Chairman", "query": "제롬 파월 연준", "img": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=100&q=80"},
+        {"author": "Christopher Waller", "role": "Federal Reserve Governor", "query": "크리스토퍼 월러 연준", "img": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&q=80"},
+        {"author": "Scott Bessent", "role": "Treasury Secretary Nominee", "query": "스콧 베센트 재무장관", "img": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"},
+        {"author": "Warren Buffett", "role": "Berkshire Hathaway CEO", "query": "워런 버핏", "img": "https://images.unsplash.com/photo-1556157382-97eda2f9e2bf?w=100&q=80"},
+        {"author": "Elon Musk", "role": "Tesla & SpaceX CEO", "query": "일론 머스크 테슬라", "img": "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&q=80"},
+        {"author": "Jensen Huang", "role": "NVIDIA CEO", "query": "젠슨 황 엔비디아", "img": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"},
+        {"author": "Jamie Dimon", "role": "JPMorgan Chase CEO", "query": "제이미 다이먼 JP모건", "img": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"},
+        {"author": "Larry Fink", "role": "BlackRock CEO", "query": "래리 핑크 블랙록", "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"},
+        {"author": "Stanley Druckenmiller", "role": "Duquesne Family Office", "query": "스탠리 드러켄밀러", "img": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80"},
+        {"author": "Howard Marks", "role": "Oaktree Capital Co-Chairman", "query": "하워드 막스 오크트리", "img": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&q=80"}
+    ]
+    
+    quotes_list = []
+    # 동적 쿼리를 병렬 처리하거나 빠른 수집을 위해 첫 번째 뉴스 타이틀을 Quote로 가공
+    for ld in leaders:
+        enc_q = urllib.parse.quote(ld['query'])
+        url = f"https://news.google.com/rss/search?q={enc_q}&hl=ko&gl=KR&ceid=KR:ko"
+        n_items = parse_google_news(url, max_items=1)
+        
+        quote_text = f"\"{ld['author']}의 경제 및 산업 생태계에 대한 통찰력과 장기적 비전 전략에 주목하십시오.\""
+        link_href = f"https://www.google.com/search?q={urllib.parse.quote(ld['author'])}"
+        
+        if n_items and len(n_items) > 0:
+            # 기사 제목을 멋지게 인용문 스타일로 포맷팅
+            cleaned_title = n_items[0]['title'].replace('"', '\'')
+            quote_text = f"\"{cleaned_title}\""
+            link_href = n_items[0]['link']
+            
+        quotes_list.append({
+            "text": quote_text,
+            "author": ld['author'],
+            "role": ld['role'],
+            "date": datetime.now().strftime("%Y.%m.%d"),
+            "link": link_href,
+            "image": ld['img']
+        })
+    return quotes_list
+
+# ── 독립된 RSS 전용 백그라운드 엔진 (10분 주기 자동 갱신) ──
+rss_cache = {
+    "top10_news": [],
+    "keyword_news": [],
+    "youtube_insights": [],
+    "dynamic_quotes": [],
+    "last_updated": 0,
+    "lock": threading.Lock()
+}
+
+def update_rss_cache_background():
+    global rss_cache
+    # 서버 기동 직후 최초 수집
+    try:
+        print("[Background Engine] 🔄 실시간 RSS/유튜브/리더스 정보 최초 자동 파싱 시작...")
+        keywords = ["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]
+        
+        t_news = get_top10_news()
+        k_news = get_keyword_news(keywords)
+        y_insights = get_youtube_insights()
+        d_quotes = get_dynamic_quotes()
+        
+        with rss_cache["lock"]:
+            if t_news: rss_cache["top10_news"] = t_news
+            if k_news: rss_cache["keyword_news"] = k_news
+            if y_insights: rss_cache["youtube_insights"] = y_insights
+            if d_quotes: rss_cache["dynamic_quotes"] = d_quotes
+            rss_cache["last_updated"] = time.time()
+        print("[Background Engine] ✅ 실시간 피드 최초 갱신 완료!")
+    except Exception as e:
+        print(f"[Background Engine] ❌ 최초 갱신 오류: {e}")
+
+    while True:
+        time.sleep(600) # 10분 대기
+        try:
+            print("[Background Engine] 🔄 주기적 RSS/유튜브 갱신 시작...")
+            keywords = ["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]
+            t_news = get_top10_news()
+            k_news = get_keyword_news(keywords)
+            y_insights = get_youtube_insights()
+            d_quotes = get_dynamic_quotes()
+            
+            with rss_cache["lock"]:
+                if t_news: rss_cache["top10_news"] = t_news
+                if k_news: rss_cache["keyword_news"] = k_news
+                if y_insights: rss_cache["youtube_insights"] = y_insights
+                if d_quotes: rss_cache["dynamic_quotes"] = d_quotes
+                rss_cache["last_updated"] = time.time()
+            print("[Background Engine] ✅ 주기적 갱신 완료!")
+        except Exception as e:
+            print(f"[Background Engine] ❌ 주기적 갱신 오류: {e}")
+
+# 백그라운드 스레드 기동
+threading.Thread(target=update_rss_cache_background, daemon=True).start()
 
 @app.route("/")
 def home():
@@ -260,100 +492,10 @@ def market_data():
                     } for item in t_list
                 ] for sector, t_list in company_tickers_full.items()
             },
-            "news": [
-                { "title": "연준(Fed) 깜짝 금리 스탠스 변화... 월가는 '연말 릴레이 금리 인하 기대' 환호", "summary": "Fed의 향후 금리 인하 가능성이 대두되며 증시가 새로운 국면을 맞았습니다.", "source": "Bloomberg", "date": datetime.now().strftime("%Y.%m.%d"), "time": "1시간 전", "link": "https://finance.yahoo.com/news/", "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" },
-                { "title": "엔비디아 발 AI 반도체 수요 대폭증, 관련주 연일 상한가 랠리", "summary": "차세대 블랙웰 칩의 기록적인 수요와 함께 반도체 밸류체인 전반이 수혜를 입고 있습니다.", "source": "Financial Times", "date": datetime.now().strftime("%Y.%m.%d"), "time": "2시간 전", "link": "https://finance.yahoo.com/quote/NVDA/news", "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80" },
-                { "title": "테슬라, 완전자율주행(FSD) 글로벌 상용화 임박... 완성차 시장 판도 흔들까", "summary": "머스크 CEO가 FSD 데이터 모델링 완료를 선언하며 오토모티브 시장에 파장을 일으키고 있습니다.", "source": "WSJ", "date": datetime.now().strftime("%Y.%m.%d"), "time": "4시간 전", "link": "https://finance.yahoo.com/quote/TSLA/news", "image": "https://images.unsplash.com/photo-1561518776-e76a5e48f731?w=400&q=80" },
-                { "title": "한국 밸류업 프로그램 실효성 입증되나... 외국인 투자자 KOSPI 대거 유입", "summary": "저PBR 기업들의 대규모 자사주 소각 발표 이후 벤치마크 지수의 강력한 지지선이 형성되었습니다.", "source": "한국경제", "date": standard_date(1) if standard_date(1) else "1일 전", "time": "12시간 전", "link": "https://finance.yahoo.com/quote/KS11.KS/news", "image": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80" },
-                { "title": "국제유가 안정세 회복, 에너지 및 항공주 V자 반등 성공", "summary": "중동 발 지정학적 리스크 완화로 원유 선물이 안정을 찾으며 관련 산업들이 폭발적인 회복탄력성을 보입니다.", "source": "MarketWatch", "date": standard_date(1) if standard_date(1) else "1일 전", "time": "15시간 전", "link": "https://finance.yahoo.com/commodities", "image": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&q=80" },
-                { "title": "중국발 강력한 부양책 발표 임박... 아시아 신흥국 증시 동반 강세 흐름", "summary": "중앙은행의 추가적인 지준율 인하 소문이 돌면서 SSEC 중심의 대규모 자금 투입이 예상됩니다.", "source": "South China Morning Post", "date": standard_date(2) if standard_date(2) else "2일 전", "time": "1일 전", "link": "https://finance.yahoo.com/quote/000001.SS", "image": "https://images.unsplash.com/photo-1541888035777-17e92ce1ab52?w=400&q=80" },
-                { "title": "비트코인 등 가상자산과 매그니피센트7 주가의 상관관계 역대 최고치 기록", "summary": "리스크-온 자산으로 취급되는 암호화폐와 빅테크의 움직임이 강력히 동기화 되고 있습니다.", "source": "CNBC", "date": standard_date(2) if standard_date(2) else "2일 전", "time": "2일 전", "link": "https://finance.yahoo.com/quote/BTC-USD", "image": "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=400&q=80" },
-                { "title": "글로벌 상업용 부동산 위기 진정세, 리츠(REITs)ETF 반발 매수 폭발", "summary": "미국 오피스 공실률이 안정화 사이클에 진입하며 금융권 내 부실 자산 우려가 씻겨나갔습니다.", "source": "Reuters", "date": standard_date(3) if standard_date(3) else "3일 전", "time": "3일 전", "link": "https://finance.yahoo.com/quote/VNQ", "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=80" }
-            ],
-            "quotes": [
-                {
-                    "text": "\"인플레이션 목표 달성을 위한 우리의 의지는 확고합니다. 데이터에 기반하여 신중하고 유연하게 통화정책을 운용할 것입니다.\"",
-                    "author": "Jerome Powell", "role": "Federal Reserve Chairman", "date": datetime.now().strftime("%Y.%m.%d"),
-                    "link": "https://en.wikipedia.org/wiki/Jerome_Powell", "image": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=100&q=80"
-                },
-                {
-                    "text": "\"최근 경제 지표들은 통화정책의 효과가 가시화되고 있음을 보여줍니다. 조기 금리 인하보다는 물가 안정의 지속성을 확인하는 것이 핵심입니다.\"",
-                    "author": "Christopher Waller", "role": "Federal Reserve Governor", "date": datetime.now().strftime("%Y.%m.%d"),
-                    "link": "https://en.wikipedia.org/wiki/Christopher_Waller", "image": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&q=80"
-                },
-                {
-                    "text": "\"강한 달러와 안정적인 국채 시장은 미국 경제의 근간입니다. 규제 완화와 친성장 정책을 통해 자본 시장의 활력을 극대화해야 합니다.\"",
-                    "author": "Scott Bessent", "role": "Treasury Secretary Nominee", "date": standard_date(1) if standard_date(1) else "1일 전",
-                    "link": "https://en.wikipedia.org/wiki/Scott_Bessent", "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
-                },
-                {
-                    "text": "\"자본주의 시장의 단기적 흔들림에 일희일비하지 마십시오. 훌륭한 비즈니스 모델과 잉여현금흐름은 결국 언제나 제자리를 찾습니다.\"",
-                    "author": "Warren Buffett", "role": "Berkshire Hathaway CEO", "date": standard_date(1) if standard_date(1) else "1일 전",
-                    "link": "https://en.wikipedia.org/wiki/Warren_Buffett", "image": "https://images.unsplash.com/photo-1556157382-97eda2f9e2bf?w=100&q=80"
-                },
-                {
-                    "text": "\"자율주행과 로봇 공학은 인류의 생산성을 수백 배로 끌어올릴 것입니다. 혁신 속도를 늦추는 기업은 도태될 수밖에 없습니다.\"",
-                    "author": "Elon Musk", "role": "Tesla & SpaceX CEO", "date": standard_date(1) if standard_date(1) else "1일 전",
-                    "link": "https://en.wikipedia.org/wiki/Elon_Musk", "image": "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&q=80"
-                },
-                {
-                    "text": "\"가속 컴퓨팅과 생성형 AI는 새로운 산업 혁명의 엔진입니다. 모든 데이터센터가 AI 팩토리로 탈바꿈하는 티핑 포인트에 와 있습니다.\"",
-                    "author": "Jensen Huang", "role": "NVIDIA CEO", "date": standard_date(2) if standard_date(2) else "2일 전",
-                    "link": "https://en.wikipedia.org/wiki/Jensen_Huang", "image": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"
-                },
-                {
-                    "text": "\"지정학적 리스크와 거시경제적 불확실성이 그 어느 때보다 높습니다. 최악의 시나리오에 대비하면서도 훌륭한 고객 가치에 집중해야 합니다.\"",
-                    "author": "Jamie Dimon", "role": "JPMorgan Chase CEO", "date": standard_date(2) if standard_date(2) else "2일 전",
-                    "link": "https://en.wikipedia.org/wiki/Jamie_Dimon", "image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"
-                },
-                {
-                    "text": "\"글로벌 자금의 대이동이 시작되었습니다. 인프라 투자와 탈탄소, 그리고 AI 기반 혁신에 수조 달러의 자본이 집중될 것입니다.\"",
-                    "author": "Larry Fink", "role": "BlackRock CEO", "date": standard_date(2) if standard_date(2) else "2일 전",
-                    "link": "https://en.wikipedia.org/wiki/Larry_Fink", "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"
-                },
-                {
-                    "text": "\"시장의 거대한 매크로 추세가 바뀌고 있습니다. 과거의 성공 방정식에 얽매이지 않고 새로운 기술 패러다임에 과감히 베팅해야 합니다.\"",
-                    "author": "Stanley Druckenmiller", "role": "Duquesne Family Office", "date": standard_date(3) if standard_date(3) else "3일 전",
-                    "link": "https://en.wikipedia.org/wiki/Stanley_Druckenmiller", "image": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80"
-                },
-                {
-                    "text": "\"지금은 극단적인 낙관주의나 투기적 행태를 피하고, 철저히 펀더멘털 사이클과 내재 가치에 집중해야 할 방어적 우위의 시기입니다.\"",
-                    "author": "Howard Marks", "role": "Oaktree Capital Co-Chairman", "date": standard_date(3) if standard_date(3) else "3일 전",
-                    "link": "https://en.wikipedia.org/wiki/Howard_Marks_(investor)", "image": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&q=80"
-                }
-            ],
-            "youtube": [
-                {
-                    "title": "슈카월드 라이브: 연준의 깜짝 스탠스 변화와 흔들리는 글로벌 금융 시장",
-                    "channel": "슈카월드",
-                    "summary": "복잡한 매크로 지표와 파월 의장의 발언 이면을 알기 쉽게 해부하고, 개인 투자자들이 취해야 할 생존 전략을 유쾌하게 브리핑합니다.",
-                    "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/@syukaworld", "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80"
-                },
-                {
-                    "title": "삼프로TV 심층 분석: AI 반도체 슈퍼 사이클 2막, 지금 사야 할 소부장 핵심 주도주",
-                    "channel": "삼프로TV",
-                    "summary": "엔비디아 블랙웰 수요 폭발에 따른 밸류체인 수혜 구조를 면밀히 분석하고 여의도 최고 애널리스트들의 탑픽을 점검합니다.",
-                    "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/@samprotv", "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80"
-                },
-                {
-                    "title": "나스닥 변동성 확대 장세의 숨은 이유와 진짜 바닥 매수 타이밍 잡기",
-                    "channel": "소수몽키",
-                    "summary": "기관 투자자들의 자금 흐름과 기술적 지표들을 종합하여 우량 빅테크 주식을 안전하게 모아가는 적립식 매수 가이드를 제공합니다.",
-                    "date": standard_date(1) if standard_date(1) else "1일 전", "link": "https://www.youtube.com/@sosumonkey", "image": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80"
-                },
-                {
-                    "title": "월가아재의 과학적투자: 통계와 데이터로 검증하는 최근 시장 랠리의 지속 가능성",
-                    "channel": "월가아재",
-                    "summary": "감정과 노이즈를 배제하고 철저한 퀀트 백테스트 결과를 바탕으로 현재 포트폴리오의 리스크 대비 기대 수익률을 해부합니다.",
-                    "date": standard_date(1) if standard_date(1) else "1일 전", "link": "https://www.youtube.com/@wallstreetazae", "image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"
-                },
-                {
-                    "title": "수페TV: 월 100만원 현금흐름 파이프라인 구축을 위한 최강 배당주 ETF 조합",
-                    "channel": "수페TV",
-                    "summary": "SCHD, JEPI 등 인기가 높은 고배당 ETF들의 최신 분배금 현황을 비교 분석하고 안정적인 패시브 인컴 포트폴리오를 제안합니다.",
-                    "date": standard_date(2) if standard_date(2) else "2일 전", "link": "https://www.youtube.com/@supe_tv", "image": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&q=80"
-                }
-            ]
+            "news": rss_cache["top10_news"] if rss_cache["top10_news"] else get_top10_news(),
+            "keywordNews": rss_cache["keyword_news"] if rss_cache["keyword_news"] else get_keyword_news(["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]),
+            "quotes": rss_cache["dynamic_quotes"] if rss_cache["dynamic_quotes"] else get_dynamic_quotes(),
+            "youtube": rss_cache["youtube_insights"] if rss_cache["youtube_insights"] else get_youtube_insights()
         }
         
         # 2. 캐시 업데이트

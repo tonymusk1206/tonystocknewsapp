@@ -234,23 +234,63 @@ function renderCompanies() {
 function renderNews() {
     if (!mockData) return;
     const container = document.getElementById('news-container');
-    container.innerHTML = mockData.news.map(news => `
-        <a href="${news.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch;">
-            <div style="flex: 0 0 150px; border-radius: 8px; overflow: hidden;">
-                <img src="${news.image}" alt="News thumbnail" style="width: 100%; height: 100%; object-fit: cover;" />
-            </div>
-            <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                <h3 style="transition: color 0.2s;">${news.title}</h3>
-                <p style="margin-top: 8px;">${news.summary}</p>
-                <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center;">
-                    <span style="color:var(--accent-brand); font-weight: 500;">${news.source}</span>
-                    <span>|</span>
-                    <span>${news.date}</span>
-                    <span>|</span>
-                    <span>${news.time}</span>
+    if (container && mockData.news) {
+        container.innerHTML = mockData.news.map(news => `
+            <a href="${news.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch;">
+                <div style="flex: 0 0 150px; border-radius: 8px; overflow: hidden;">
+                    <img src="${news.image}" alt="News thumbnail" style="width: 100%; height: 100%; object-fit: cover;" />
                 </div>
+                <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="transition: color 0.2s;">${news.title}</h3>
+                    <p style="margin-top: 8px;">${news.summary}</p>
+                    <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center;">
+                        <span style="color:var(--accent-brand); font-weight: 500;">${news.source}</span>
+                        <span>|</span>
+                        <span>${news.date}</span>
+                        <span>|</span>
+                        <span>${news.time}</span>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    }
+    
+    // 키워드 뉴스 함께 호출
+    renderKeywordNews();
+}
+
+// 4-2. 실시간 키워드별 뉴스 렌더링
+function renderKeywordNews() {
+    if (!mockData || !mockData.keywordNews) return;
+    const container = document.getElementById('keyword-news-container');
+    if (!container) return;
+    
+    container.innerHTML = mockData.keywordNews.map(kwObj => `
+        <div class="glass-card keyword-group-card" style="padding: 1.5rem; background: rgba(20, 22, 31, 0.6);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-highlight); padding-bottom: 0.8rem;">
+                <span style="font-size: 1.2rem; background: rgba(59, 130, 246, 0.15); padding: 4px 10px; border-radius: 8px; color: var(--accent-brand); font-weight: bold;">
+                    # ${kwObj.keyword}
+                </span>
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">관련 인기 뉴스 TOP 3</span>
             </div>
-        </a>
+            <div class="news-list" style="gap: 1rem;">
+                ${kwObj.news.map(n => `
+                    <a href="${n.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1rem; align-items: stretch; padding: 1rem; background: rgba(0,0,0,0.25);">
+                        <div style="flex: 0 0 100px; border-radius: 6px; overflow: hidden;">
+                            <img src="${n.image}" alt="thumb" style="width: 100%; height: 100%; object-fit: cover;" />
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                            <h4 style="font-size: 1rem; transition: color 0.2s; line-height: 1.3;">${n.title}</h4>
+                            <div style="margin-top: 8px; display: flex; gap: 8px; font-size: 0.75rem; color: var(--text-secondary);">
+                                <span style="color: var(--accent-brand);">${n.source}</span>
+                                <span>|</span>
+                                <span>${n.date}</span>
+                            </div>
+                        </div>
+                    </a>
+                `).join('')}
+            </div>
+        </div>
     `).join('');
 }
 
