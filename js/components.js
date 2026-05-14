@@ -236,19 +236,21 @@ function renderNews() {
     const container = document.getElementById('news-container');
     if (container && mockData.news) {
         container.innerHTML = mockData.news.map(news => `
-            <a href="${news.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch;">
-                <div style="flex: 0 0 150px; border-radius: 8px; overflow: hidden;">
+            <a href="${news.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch; padding: 1.2rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid transparent; transition: all 0.2s;">
+                <div style="flex: 0 0 140px; border-radius: 8px; overflow: hidden;">
                     <img src="${news.image}" alt="News thumbnail" style="width: 100%; height: 100%; object-fit: cover;" />
                 </div>
-                <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                    <h3 style="transition: color 0.2s;">${news.title}</h3>
-                    <p style="margin-top: 8px;">${news.summary}</p>
-                    <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center;">
-                        <span style="color:var(--accent-brand); font-weight: 500;">${news.source}</span>
+                <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 style="transition: color 0.2s; font-size: 1.1rem; line-height: 1.3; margin-bottom: 8px;">${news.title}</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                            ${news.hashtags ? news.hashtags.split(' ').map(tag => `<span style="font-size: 0.75rem; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 3px 8px; border-radius: 6px; font-weight: 500;">${tag}</span>`).join('') : ''}
+                        </div>
+                    </div>
+                    <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                        <span style="color: var(--accent-brand); font-weight: bold;">${news.source}</span>
                         <span>|</span>
-                        <span>${news.date}</span>
-                        <span>|</span>
-                        <span>${news.time}</span>
+                        <span style="color: var(--text-secondary);">${news.date}</span>
                     </div>
                 </div>
             </a>
