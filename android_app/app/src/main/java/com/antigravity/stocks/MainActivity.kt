@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
 
                 // 앱 이름
                 addView(TextView(context).apply {
-                    text = "Antigravity Stocks"
+                    text = "Tony Stocks"
                     setTextColor(Color.parseColor("#e8e8f0"))
                     textSize = 20f
                     gravity = Gravity.CENTER
