@@ -519,3 +519,80 @@ h3 {
         align-items: flex-start;
     }
 }
+
+/* ── 프리미엄 네비게이션 탭 바 (Navigation Tabs) ── */
+.app-navigation {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.tabs-container {
+    display: flex;
+    background: rgba(10, 11, 16, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-highlight);
+    border-radius: 50px;
+    padding: 6px;
+    gap: 4px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* 스크롤바 숨김 처리 */
+.tabs-container::-webkit-scrollbar {
+    display: none;
+}
+.tabs-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: var(--transition-base);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tab-btn.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--accent-brand), #6366f1);
+    box-shadow: 0 4px 15px var(--accent-brand-glow);
+}
+
+.tab-icon {
+    font-size: 1.1rem;
+}
+
+/* 탭 전환에 따른 섹션 표시/숨김용 클래스 */
+.dashboard-section {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.dashboard-section.hidden-tab {
+    display: none !important;
+    opacity: 0;
+    transform: translateY(10px);
+}
+

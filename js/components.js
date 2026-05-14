@@ -299,3 +299,59 @@ function renderYoutube() {
         </a>
     `).join('');
 }
+
+// ── 7. 탭 전환 제어 로직 (Navigation Tabs) ──
+function initTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    if (!tabBtns.length) return;
+
+    // 각 탭별 표시할 섹션 ID 맵핑
+    const tabSectionMap = {
+        'tab-market': ['market-overview-section', 'sector-performance-section'],
+        'tab-companies': ['company-performance-section'],
+        'tab-news': ['news-section'],
+        'tab-insights': ['quotes-section', 'youtube-section']
+    };
+
+    function switchTab(targetTabId) {
+        // 버튼 활성화 상태 업데이트
+        tabBtns.forEach(btn => {
+            if (btn.dataset.tab === targetTabId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // 모든 섹션을 검사하여 탭 대상에 속하면 표시, 아니면 숨김
+        const allSections = document.querySelectorAll('.dashboard-section');
+        const activeSectionIds = tabSectionMap[targetTabId] || [];
+
+        allSections.forEach(section => {
+            if (activeSectionIds.includes(section.id)) {
+                section.classList.remove('hidden-tab');
+            } else {
+                section.classList.add('hidden-tab');
+            }
+        });
+    }
+
+    // 클릭 리스너 등록
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            if (tabId) switchTab(tabId);
+        });
+    });
+
+    // 초기 상태 셋팅 (기본 active 탭인 tab-market 섹션만 표시)
+    switchTab('tab-market');
+}
+
+// DOM이 준비되거나 스크립트가 로드되었을 때 탭 기능 활성화
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTabs);
+} else {
+    initTabs();
+}
+
