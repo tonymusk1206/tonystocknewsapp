@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var errorLayout: LinearLayout
 
     companion object {
-        private const val TARGET_URL = "https://antigravity-stocks.onrender.com"
+        private const val TARGET_URL = "https://tony-stock-news.onrender.com"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
