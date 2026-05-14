@@ -50,12 +50,16 @@ def calculate_changes(hist, current_close):
 # ── 실시간 뉴스 & 유튜브 RSS 파싱 엔진 ──
 def fetch_rss(url, timeout=10):
     try:
-        req = urllib.request.Request(
-            url, 
-            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        )
+        # 구글/유튜브 서버의 봇 차단을 완벽하게 우회하는 다중 스텔스 헤더 주입
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Cache-Control': 'no-cache'
+        }
+        req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as response:
-            return ET.fromstring(response.read())
+            return ET.fromstring(response.read().strip())
     except Exception as e:
         print(f"RSS fetch error for {url}: {e}")
         return None
@@ -147,9 +151,9 @@ def parse_google_news_verified(url, required_count=10):
 def get_top10_news():
     # 10개가 안 나올 경우를 대비한 다중 피드 검증 및 자가 치유 프로세스
     feeds = [
-        "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR:ko", # 주요 경제/비즈니스 토픽
-        "https://news.google.com/rss/search?q=증시+경제+금융+주식&hl=ko&gl=KR&ceid=KR:ko", # 메인 검색 피드
-        "https://news.google.com/rss/search?q=나스닥+코스피+금리+투자&hl=ko&gl=KR&ceid=KR:ko" # 백업 검색 피드
+        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko", # 구글 금융/비즈니스 메인 다이렉트 (차단 없음)
+        "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR:ko",
+        "https://news.google.com/rss/search?q=증시+경제+금융&hl=ko&gl=KR&ceid=KR:ko"
     ]
     
     collected_news = []
@@ -206,7 +210,13 @@ def get_youtube_insights():
         url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
         success = False
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Cache-Control': 'no-cache'
+            }
+            req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as response:
                 xml_data = response.read().decode('utf-8')
                 
