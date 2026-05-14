@@ -248,16 +248,7 @@ def get_youtube_insights():
         except Exception as e:
             print(f"YouTube parse error for {ch['name']}: {e}")
             
-        # 실패 시에만 안전장치 가동
-        if not success:
-            videos.append({
-                "title": f"{ch['name']} 실시간 경제/증시 집중 브리핑",
-                "channel": ch['name'],
-                "summary": f"{ch['name']} 채널의 실시간 피드를 갱신 중입니다.",
-                "date": datetime.now().strftime("%Y.%m.%d"),
-                "link": f"https://www.youtube.com/channel/{ch['id']}",
-                "image": ch['img']
-            })
+        # 실패 시 오지랖 백업 코드를 완전히 삭제하여 가짜 제목 생성 원천 차단
             
     return videos
 
