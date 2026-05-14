@@ -304,7 +304,8 @@ rss_cache = {
 
 def update_rss_cache_background():
     global rss_cache
-    # 서버 기동 직후 최초 수집
+    # 웹서버 즉시 부팅(포트 바인딩)을 보장하기 위해 최초 3초간 조용히 대기
+    time.sleep(3)
     try:
         print("[Background Engine] 🔄 실시간 RSS/유튜브/리더스 정보 최초 자동 파싱 시작...")
         keywords = ["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]
@@ -343,9 +344,6 @@ def update_rss_cache_background():
             print("[Background Engine] ✅ 주기적 갱신 완료!")
         except Exception as e:
             print(f"[Background Engine] ❌ 주기적 갱신 오류: {e}")
-
-# 백그라운드 스레드 기동
-threading.Thread(target=update_rss_cache_background, daemon=True).start()
 
 @app.route("/")
 def home():
@@ -565,10 +563,18 @@ def market_data():
                     } for item in t_list
                 ] for sector, t_list in company_tickers_full.items()
             },
-            "news": rss_cache["top10_news"] if rss_cache["top10_news"] else get_top10_news(),
-            "keywordNews": rss_cache["keyword_news"] if rss_cache["keyword_news"] else get_keyword_news(["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]),
-            "quotes": rss_cache["dynamic_quotes"] if rss_cache["dynamic_quotes"] else get_dynamic_quotes(),
-            "youtube": rss_cache["youtube_insights"] if rss_cache["youtube_insights"] else get_youtube_insights()
+            "news": rss_cache["top10_news"] if rss_cache["top10_news"] else [
+                {"title": "[실시간 뉴스 엔진 가동 중]", "summary": "최신 경제/증시 피드를 수집하고 있습니다. 3초 뒤 새로고침 하시면 데이터가 표기됩니다.", "source": "출처: System", "hashtags": "#엔진기동중 #데이터로딩 #스마트캐싱", "date": datetime.now().strftime("%Y.%m.%d"), "time": "실시간", "link": "#", "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80"}
+            ],
+            "keywordNews": rss_cache["keyword_news"] if rss_cache["keyword_news"] else [
+                {"keyword": "실시간 핫이슈", "news": [{"title": "키워드별 연관 뉴스 심층 분석을 갱신 중입니다.", "source": "출처: System", "date": datetime.now().strftime("%Y.%m.%d"), "link": "#", "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80"}]}
+            ],
+            "quotes": rss_cache["dynamic_quotes"] if rss_cache["dynamic_quotes"] else [
+                {"text": "\"리더스 통찰력 및 라이브 코멘트 파이프라인을 동기화 중입니다.\"", "author": "Jerome Powell", "role": "Federal Reserve Chairman", "date": datetime.now().strftime("%Y.%m.%d"), "link": "#", "image": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=100&q=80"}
+            ],
+            "youtube": rss_cache["youtube_insights"] if rss_cache["youtube_insights"] else [
+                {"title": "[슈카월드] 실시간 경제/증시 라이브 브리핑", "channel": "슈카월드", "summary": "실시간 최신 영상 피드를 가져오는 중입니다.", "date": datetime.now().strftime("%Y.%m.%d"), "link": "#", "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80"}
+            ]
         }
         
         # 2. 캐시 업데이트
@@ -579,6 +585,9 @@ def market_data():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
+
+# 서버 메인 루프 실행 전 비동기 스레드 스타트 (부팅 절대 방해 금지)
+threading.Thread(target=update_rss_cache_background, daemon=True).start()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host="0.0.0.0")
