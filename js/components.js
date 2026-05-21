@@ -25,7 +25,7 @@ function createMarketCard(market) {
     if (!mockData) return '';
     const renderMetric = (label, date, change) => `
         <div class="metric-box">
-            <span class="metric-label">${label}<br/>(${date})</span>
+            <span class="metric-label">${label}</span>
             <span class="metric-value ${getPercentClass(change)}">${change.pct > 0 ? '+' : ''}${change.pct}%</span>
             <span class="metric-hist-price">${change.price}</span>
         </div>
@@ -40,7 +40,7 @@ function createMarketCard(market) {
             </div>
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    <span class="metric-label">현재가 (${mockData.dates.current})</span>
+                    <span class="metric-label">현재가</span>
                     <div class="metric-content">
                         <span class="metric-value highlight">${market.value}</span>
                         <span class="metric-pct ${getPercentClass(market.changes.today)}">
@@ -129,14 +129,14 @@ function createSectorTableHTML(sectors) {
         <thead>
             <tr>
                 <th>자산 (ETF)</th>
-                <th>현재가<br/>(${mockData.dates.current})</th>
-                <th>1일전比<br/>(${mockData.dates.d1})</th>
-                <th>3일전比<br/>(${mockData.dates.d3})</th>
-                <th>1주전比<br/>(${mockData.dates.w1})</th>
-                <th>1달전比<br/>(${mockData.dates.m1})</th>
-                <th>3달전比<br/>(${mockData.dates.m3})</th>
-                <th>6달전比<br/>(${mockData.dates.m6})</th>
-                <th>1년전比<br/>(${mockData.dates.y1})</th>
+                <th>현재가</th>
+                <th>1일전比</th>
+                <th>3일전比</th>
+                <th>1주전比</th>
+                <th>1달전比</th>
+                <th>3달전比</th>
+                <th>6달전比</th>
+                <th>1년전比</th>
             </tr>
         </thead>
         <tbody>
@@ -155,7 +155,7 @@ function renderSectors() {
 function createCompanyCard(company) {
     const renderMetric = (label, date, change) => `
         <div class="metric-box">
-            <span class="metric-label">${label}<br/>(${date})</span>
+            <span class="metric-label">${label}</span>
             <span class="metric-value ${getPercentClass(change)}">${change.pct > 0 ? '+' : ''}${change.pct}%</span>
             <span class="metric-hist-price">${change.price}</span>
         </div>
@@ -175,7 +175,7 @@ function createCompanyCard(company) {
             
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    <span class="metric-label">현재가 (${mockData.dates.current})</span>
+                    <span class="metric-label">현재가</span>
                     <div class="metric-content">
                         <span class="metric-value highlight">${company.value}</span>
                         <span class="metric-pct ${getPercentClass(company.changes.today)}">
