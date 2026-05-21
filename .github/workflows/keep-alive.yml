@@ -1,0 +1,36 @@
+name: 🔔 Render 서버 슬립 방지 (14분 주기 자동 핑)
+
+on:
+  schedule:
+    # UTC 기준 매 14분마다 실행 (Render 무료 플랜 15분 슬립 방지)
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # 수동 실행도 가능
+
+jobs:
+  keep-alive:
+    name: Ping Render Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 🏓 서버 핑 전송
+        run: |
+          echo "⏰ $(date '+%Y-%m-%d %H:%M:%S UTC') — Render 서버 핑 시작"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 5 \
+            "https://tony-stock-news.onrender.com/api/market-data")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ 서버 정상 응답 (HTTP $HTTP_STATUS) — 슬립 방지 완료!"
+          else
+            echo "⚠️  서버 응답 코드: $HTTP_STATUS — 재시도 중..."
+            # 슬립에서 깨어나는 중일 수 있으므로 30초 후 재핑
+            sleep 30
+            HTTP_STATUS2=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 60 \
+              "https://tony-stock-news.onrender.com/api/market-data")
+            echo "🔁 재핑 결과: HTTP $HTTP_STATUS2"
+          fi
