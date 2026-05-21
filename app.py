@@ -464,6 +464,11 @@ def update_rss_cache_background():
 def home():
     return send_from_directory(".", "index.html")
 
+@app.route("/ping")
+def ping():
+    """슬립 방지 전용 초경량 엔드포인트 — 즉시 200 응답, 연산 없음"""
+    return jsonify({"status": "alive", "ts": time.time()}), 200
+
 @app.route('/api/market-data')
 def market_data():
     global data_cache
