@@ -237,9 +237,7 @@ function renderNews() {
     if (container && mockData.news) {
         container.innerHTML = mockData.news.map(news => `
             <a href="${news.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch; padding: 1.2rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid transparent; transition: all 0.2s;">
-                <div style="flex: 0 0 140px; border-radius: 8px; overflow: hidden;">
-                    <img src="${news.image}" alt="News thumbnail" style="width: 100%; height: 100%; object-fit: cover;" />
-                </div>
+
                 <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <h3 style="transition: color 0.2s; font-size: 1.1rem; line-height: 1.3; margin-bottom: 8px;">${news.title}</h3>
@@ -278,9 +276,7 @@ function renderKeywordNews() {
             <div class="news-list" style="gap: 1rem;">
                 ${kwObj.news.map(n => `
                     <a href="${n.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1rem; align-items: stretch; padding: 1rem; background: rgba(0,0,0,0.25);">
-                        <div style="flex: 0 0 100px; border-radius: 6px; overflow: hidden;">
-                            <img src="${n.image}" alt="thumb" style="width: 100%; height: 100%; object-fit: cover;" />
-                        </div>
+
                         <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
                             <h4 style="font-size: 1rem; transition: color 0.2s; line-height: 1.3;">${n.title}</h4>
                             <div style="margin-top: 8px; display: flex; gap: 8px; font-size: 0.75rem; color: var(--text-secondary);">
@@ -323,12 +319,13 @@ function renderYoutube() {
     
     container.innerHTML = mockData.youtube.map(video => `
         <a href="${video.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch; background: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.2);">
+            ${video.image && video.image.includes('ytimg.com') ? `
             <div style="flex: 0 0 180px; border-radius: 8px; overflow: hidden; position: relative;">
                 <img src="${video.image}" alt="Youtube thumbnail" style="width: 100%; height: 100%; object-fit: cover;" />
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; color: white; display:flex; align-items:center; gap: 5px;">
                    <span style="color: #ef4444; font-weight: bold; font-size: 1.2rem;">▶</span> Play
                 </div>
-            </div>
+            </div>` : ''}
             <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
                 <h3 style="transition: color 0.2s;">${video.title}</h3>
                 <p style="margin-top: 8px;">${video.summary}</p>

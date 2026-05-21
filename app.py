@@ -196,15 +196,6 @@ def get_top10_news():
                 seen_titles.add(it['title'])
                 collected_news.append(it)
                 if len(collected_news) == 10: return collected_news
-    while len(collected_news) < 10:
-        idx = len(collected_news) + 1
-        collected_news.append({
-            "title": f"[심층분석] 글로벌 증시 변동성 확대 장세 속 주도주 발굴 전략 ({idx})",
-            "summary": "기관 및 외인 자금 흐름을 바탕으로 장기 성장 모멘텀을 지닌 섹터별 실적 전망을 점검합니다.",
-            "source": "출처: 로이터 연합", "hashtags": "#시장동향브리핑 #투자전략제시 #펀더멘털분석",
-            "date": datetime.now().strftime("%Y.%m.%d"), "time": "실시간",
-            "link": "https://finance.yahoo.com", "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80"
-        })
     return collected_news[:10]
 
 def get_keyword_news(keywords):
