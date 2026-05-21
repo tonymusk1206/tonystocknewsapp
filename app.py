@@ -2,13 +2,14 @@ from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 import yfinance as yf
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
+import threading
 import time
 import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
 import re
-import threading
+from collections import Counter
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 CORS(app)
@@ -190,13 +191,42 @@ def get_top10_news():
     collected_news = []
     seen_titles = set()
     for feed_url in feeds:
-        items = parse_google_news_verified(feed_url, required_count=20)
+        items = parse_google_news_verified(feed_url, required_count=30)
         for it in items:
             if it['title'] not in seen_titles:
                 seen_titles.add(it['title'])
                 collected_news.append(it)
-                if len(collected_news) == 10: return collected_news
+                if len(collected_news) >= 10: return collected_news[:10]
     return collected_news[:10]
+
+def extract_trending_keywords():
+    feeds = [
+        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko",
+        "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR:ko",
+        "https://news.google.com/rss/search?q=증시+경제+금융&hl=ko&gl=KR&ceid=KR:ko"
+    ]
+    stopwords = set(["주식", "증시", "경제", "금융", "투자", "시장", "기업", "실적", "오늘", "내일", "이번", "주가", "상승", "하락", "급등", "급락", "돌파", "마감", "코스피", "코스닥", "미국", "한국", "뉴욕", "특징주", "단독", "종합", "속보", "분석", "전망", "목표가", "종목", "관심주", "추천주"])
+    words = []
+    for url in feeds:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        try:
+            with urllib.request.urlopen(req, timeout=5) as response:
+                root = ET.fromstring(response.read().strip())
+                for item in root.findall('.//item'):
+                    title = item.findtext('title', '')
+                    if " - " in title:
+                        title = title.rsplit(" - ", 1)[0]
+                    tokens = re.findall(r'[가-힣A-Za-z0-9]+', title)
+                    for t in tokens:
+                        if len(t) > 1 and t not in stopwords:
+                            words.append(t)
+        except Exception:
+            pass
+    if not words:
+        return ["엔비디아", "금리인하", "비트코인", "테슬라", "애플", "삼성전자", "반도체", "AI", "배당", "환율"]
+    counter = Counter(words)
+    top10 = [word for word, count in counter.most_common(10)]
+    return top10
 
 def get_keyword_news(keywords):
     keyword_data = []
@@ -229,25 +259,28 @@ def get_youtube_insights():
     for ch in channels:
         url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
         success = False
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'ko-KR,ko;q=0.9', 'Cache-Control': 'no-cache'}
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=5) as response:
-                xml_data = response.read().decode('utf-8')
-                entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
-                if entry_match:
-                    entry_text = entry_match.group(1)
-                    title_match = re.search(r'<title>(.*?)</title>', entry_text)
-                    title = title_match.group(1) if title_match else ""
-                    vid_match = re.search(r'<yt:videoId>(.*?)</yt:videoId>', entry_text)
-                    video_id = vid_match.group(1) if vid_match else ""
-                    if title and video_id:
-                        title = title.replace('<![CDATA[', '').replace(']]>', '').strip()
-                        videos.append({"title": title, "channel": ch['name'], "summary": f"{ch['name']} 채널의 실시간 최신 분석 영상입니다.", "date": base_dt_now, "link": f"https://www.youtube.com/watch?v={video_id}", "image": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"})
-                        success = True
-        except Exception as e:
-            print(f"YouTube parse error for {ch['name']}: {e}")
+        for attempt in range(3):
+            try:
+                headers = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'ko-KR,ko;q=0.9', 'Cache-Control': 'no-cache'}
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    xml_data = response.read().decode('utf-8')
+                    entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
+                    if entry_match:
+                        entry_text = entry_match.group(1)
+                        title_match = re.search(r'<title>(.*?)</title>', entry_text)
+                        title = title_match.group(1) if title_match else ""
+                        vid_match = re.search(r'<yt:videoId>(.*?)</yt:videoId>', entry_text)
+                        video_id = vid_match.group(1) if vid_match else ""
+                        if title and video_id:
+                            title = title.replace('<![CDATA[', '').replace(']]>', '').strip()
+                            videos.append({"title": title, "channel": ch['name'], "summary": f"{ch['name']} 채널의 실시간 최신 분석 영상입니다.", "date": base_dt_now, "link": f"https://www.youtube.com/watch?v={video_id}", "image": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"})
+                            success = True
+                            break
+            except Exception as e:
+                time.sleep(1)
         if not success:
+            print(f"YouTube parse error for {ch['name']} after 3 attempts.")
             if ch['name'] in old_videos_map:
                 videos.append(old_videos_map[ch['name']])
             else:
@@ -262,12 +295,15 @@ def get_dynamic_quotes():
         {"author": "Elon Musk", "role": "Tesla & SpaceX CEO", "query": "일론 머스크 테슬라", "img": "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&q=80"},
         {"author": "Jensen Huang", "role": "NVIDIA CEO", "query": "젠슨 황 엔비디아", "img": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"},
         {"author": "Jamie Dimon", "role": "JPMorgan Chase CEO", "query": "제이미 다이먼 JP모건", "img": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"},
-        {"author": "Larry Fink", "role": "BlackRock CEO", "query": "래리 핑크 블랙록", "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"}
+        {"author": "Larry Fink", "role": "BlackRock CEO", "query": "래리 핑크 블랙록", "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"},
+        {"author": "Bill Gates", "role": "Microsoft Co-founder", "query": "빌 게이츠 마이크로소프트", "img": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"},
+        {"author": "Mark Zuckerberg", "role": "Meta CEO", "query": "마크 저커버그 메타", "img": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80"},
+        {"author": "Tim Cook", "role": "Apple CEO", "query": "팀 쿡 애플", "img": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&q=80"}
     ]
     quotes_list = []
     for ld in leaders:
         enc_q = urllib.parse.quote(ld['query'])
-        url = f"https://news.google.com/rss/search?q={enc_q}&hl=ko&gl=KR&ceid=KR:ko"
+        url = f"https://news.google.com/rss/search?q={enc_q}+when:7d&hl=ko&gl=KR&ceid=KR:ko"
         n_items = parse_google_news_verified(url, required_count=1)
         quote_text = f"\"{ld['author']}의 경제 및 산업 생태계에 대한 통찰력과 장기적 비전 전략에 주목하십시오.\""
         link_href = f"https://www.google.com/search?q={urllib.parse.quote(ld['author'])}"
@@ -412,7 +448,7 @@ def update_rss_cache_background():
     time.sleep(3)  # 서버 부팅 완료 대기
     try:
         print("[Background Engine] 🔄 최초 RSS/유튜브/주식 데이터 수집 시작...")
-        keywords = ["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]
+        keywords = extract_trending_keywords()
         t_news = get_top10_news()
         k_news = get_keyword_news(keywords)
         y_insights = get_youtube_insights()
@@ -434,7 +470,7 @@ def update_rss_cache_background():
         time.sleep(600)  # 10분 대기
         try:
             print("[Background Engine] 🔄 주기적 RSS/주식 데이터 갱신...")
-            keywords = ["엔비디아", "금리인하", "비트코인", "테슬라", "밸류업"]
+            keywords = extract_trending_keywords()
             t_news = get_top10_news()
             k_news = get_keyword_news(keywords)
             y_insights = get_youtube_insights()
