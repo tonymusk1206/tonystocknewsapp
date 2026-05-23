@@ -693,20 +693,12 @@ def update_rss_cache_background():
         fetch_and_cache_market_data()
         print("[Background Engine] [DONE] 주식 데이터 완료!")
 
-        # ② 번역 없는 빠른 뉴스/발언 캐시 (개별 갱신으로 사용자 대기 최소화)
+        # ② 발언 및 영상 수집 (개별 갱신으로 사용자 대기 최소화)
         print("[Background Engine] [START] 빠른 RSS 수집 (번역 전)...")
-        t_news_fast = _get_news_fast()
-        if t_news_fast:
-            with rss_cache["lock"]: rss_cache["top10_news"] = t_news_fast
             
         d_quotes_fast = _get_quotes_fast()
         if d_quotes_fast:
             with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes_fast
-            
-        keywords = extract_trending_keywords()
-        k_news = get_keyword_news(keywords)
-        if k_news:
-            with rss_cache["lock"]: rss_cache["keyword_news"] = k_news
             
         y_insights = get_youtube_insights()
         if y_insights:
@@ -714,10 +706,7 @@ def update_rss_cache_background():
         print("[Background Engine] [DONE] 빠른 RSS 완료!")
 
         # ③ 한글 번역 포함 정확한 버전으로 교체
-        print("[Background Engine] [START] 한글 번역 뉴스/발언 수집...")
-        t_news_ko = get_top10_news()
-        if t_news_ko:
-            with rss_cache["lock"]: rss_cache["top10_news"] = t_news_ko
+        print("[Background Engine] [START] 한글 번역 발언 수집...")
             
         d_quotes_ko = get_dynamic_quotes()
         if d_quotes_ko:
@@ -734,15 +723,6 @@ def update_rss_cache_background():
             print("[Background Engine] [START] 주기적 RSS/주식 데이터 갱신...")
             fetch_and_cache_market_data()
             
-            t_news = get_top10_news()
-            if t_news:
-                with rss_cache["lock"]: rss_cache["top10_news"] = t_news
-                
-            keywords = extract_trending_keywords()
-            k_news = get_keyword_news(keywords)
-            if k_news:
-                with rss_cache["lock"]: rss_cache["keyword_news"] = k_news
-                
             y_insights = get_youtube_insights()
             if y_insights:
                 with rss_cache["lock"]: rss_cache["youtube_insights"] = y_insights
