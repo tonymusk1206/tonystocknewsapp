@@ -362,11 +362,11 @@ def get_youtube_insights():
     for ch in channels:
         url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
         success = False
-        for attempt in range(3):
+        for attempt in range(1): # Reduced from 3 to 1 to prevent blocking thread for minutes
             try:
                 headers = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'ko-KR,ko;q=0.9', 'Cache-Control': 'no-cache'}
                 req = urllib.request.Request(url, headers=headers)
-                with urllib.request.urlopen(req, timeout=5) as response:
+                with urllib.request.urlopen(req, timeout=3) as response: # Reduced timeout to 3s
                     xml_data = response.read().decode('utf-8')
                     entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
                     if entry_match:
@@ -381,7 +381,7 @@ def get_youtube_insights():
                             success = True
                             break
             except Exception as e:
-                time.sleep(1)
+                pass
         if not success:
             print(f"YouTube parse error for {ch['name']} after 3 attempts.")
             if ch['name'] in old_videos_map:
@@ -683,28 +683,37 @@ def update_rss_cache_background():
         fetch_and_cache_market_data()
         print("[Background Engine] [DONE] 주식 데이터 완료!")
 
-        # ② 번역 없는 빠른 뉴스/발언 먼저 캐시
+        # ② 번역 없는 빠른 뉴스/발언 캐시 (개별 갱신으로 사용자 대기 최소화)
         print("[Background Engine] [START] 빠른 RSS 수집 (번역 전)...")
-        keywords = extract_trending_keywords()
         t_news_fast = _get_news_fast()
-        k_news = get_keyword_news(keywords)
-        y_insights = get_youtube_insights()
+        if t_news_fast:
+            with rss_cache["lock"]: rss_cache["top10_news"] = t_news_fast
+            
         d_quotes_fast = _get_quotes_fast()
-        with rss_cache["lock"]:
-            if t_news_fast:   rss_cache["top10_news"]     = t_news_fast
-            if k_news:        rss_cache["keyword_news"]   = k_news
-            if y_insights:    rss_cache["youtube_insights"] = y_insights
-            if d_quotes_fast: rss_cache["dynamic_quotes"] = d_quotes_fast
+        if d_quotes_fast:
+            with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes_fast
+            
+        keywords = extract_trending_keywords()
+        k_news = get_keyword_news(keywords)
+        if k_news:
+            with rss_cache["lock"]: rss_cache["keyword_news"] = k_news
+            
+        y_insights = get_youtube_insights()
+        if y_insights:
+            with rss_cache["lock"]: rss_cache["youtube_insights"] = y_insights
         print("[Background Engine] [DONE] 빠른 RSS 완료!")
 
         # ③ 한글 번역 포함 정확한 버전으로 교체
         print("[Background Engine] [START] 한글 번역 뉴스/발언 수집...")
         t_news_ko = get_top10_news()
+        if t_news_ko:
+            with rss_cache["lock"]: rss_cache["top10_news"] = t_news_ko
+            
         d_quotes_ko = get_dynamic_quotes()
-        with rss_cache["lock"]:
-            if t_news_ko:   rss_cache["top10_news"]   = t_news_ko
-            if d_quotes_ko: rss_cache["dynamic_quotes"] = d_quotes_ko
-            rss_cache["last_updated"] = time.time()
+        if d_quotes_ko:
+            with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes_ko
+            
+        with rss_cache["lock"]: rss_cache["last_updated"] = time.time()
         print("[Background Engine] [DONE] 한글 번역 완료!")
     except Exception as e:
         print(f"[Background Engine] [ERROR] 최초 갱신 오류: {e}")
@@ -714,17 +723,25 @@ def update_rss_cache_background():
         try:
             print("[Background Engine] [START] 주기적 RSS/주식 데이터 갱신...")
             fetch_and_cache_market_data()
-            keywords = extract_trending_keywords()
+            
             t_news = get_top10_news()
+            if t_news:
+                with rss_cache["lock"]: rss_cache["top10_news"] = t_news
+                
+            keywords = extract_trending_keywords()
             k_news = get_keyword_news(keywords)
+            if k_news:
+                with rss_cache["lock"]: rss_cache["keyword_news"] = k_news
+                
             y_insights = get_youtube_insights()
+            if y_insights:
+                with rss_cache["lock"]: rss_cache["youtube_insights"] = y_insights
+                
             d_quotes = get_dynamic_quotes()
-            with rss_cache["lock"]:
-                if t_news:     rss_cache["top10_news"]     = t_news
-                if k_news:     rss_cache["keyword_news"]   = k_news
-                if y_insights: rss_cache["youtube_insights"] = y_insights
-                if d_quotes:   rss_cache["dynamic_quotes"] = d_quotes
-                rss_cache["last_updated"] = time.time()
+            if d_quotes:
+                with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes
+                
+            with rss_cache["lock"]: rss_cache["last_updated"] = time.time()
             print("[Background Engine] [DONE] 주기적 갱신 완료!")
         except Exception as e:
             print(f"[Background Engine] [ERROR] 주기적 갱신 오류: {e}")
