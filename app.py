@@ -454,6 +454,50 @@ rss_cache = {
     "lock": threading.Lock()
 }
 
+CACHE_FILE = "market_cache.json"
+import os
+
+if os.path.exists(CACHE_FILE):
+    try:
+        with open(CACHE_FILE, "r", encoding="utf-8") as f:
+            cache_data = json.load(f)
+            data_cache["data"] = cache_data.get("market_data")
+            data_cache["last_updated"] = os.path.getmtime(CACHE_FILE)
+            if "rss_data" in cache_data:
+                rss_cache.update(cache_data["rss_data"])
+            print("[Startup] Loaded all data from local cache file.")
+    except Exception as e:
+        print(f"[Startup] Error loading cache file: {e}")
+
+import pytz
+
+def is_any_market_open():
+    try:
+        now_utc = datetime.now(pytz.utc)
+        
+        # US Market (09:30 to 16:00 ET, Mon-Fri)
+        et_tz = pytz.timezone('US/Eastern')
+        now_et = now_utc.astimezone(et_tz)
+        us_open = False
+        if now_et.weekday() < 5:
+            if datetime.strptime("09:30", "%H:%M").time() <= now_et.time() <= datetime.strptime("16:00", "%H:%M").time():
+                us_open = True
+
+        # KR Market (09:00 to 15:30 KST, Mon-Fri)
+        kst_tz = pytz.timezone('Asia/Seoul')
+        now_kst = now_utc.astimezone(kst_tz)
+        kr_open = False
+        if now_kst.weekday() < 5:
+            if datetime.strptime("09:00", "%H:%M").time() <= now_kst.time() <= datetime.strptime("15:30", "%H:%M").time():
+                kr_open = True
+
+        return us_open or kr_open
+    except Exception as e:
+        print("Error checking market hours:", e)
+        return True # Default to fetching if error
+
+
+
 # ── 백그라운드 주식 데이터 수집 함수 (API 핸들러에서 절대 호출 금지) ──
 def fetch_and_cache_market_data():
     global data_cache
