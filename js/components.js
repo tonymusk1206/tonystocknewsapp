@@ -1,5 +1,5 @@
 // 공통 유틸리티
-function formatPercent(data) {
+function formatPercent(data, hidePrice = false) {
     const value = data.pct;
     const price = data.price;
     let html = '';
@@ -8,7 +8,7 @@ function formatPercent(data) {
     else if (value < 0) html = `<span class="val-down">▼ ${Math.abs(value).toFixed(1)}%</span>`;
     else html = `<span class="val-neutral">- ${value.toFixed(1)}%</span>`;
     
-    if (price && price !== 'N/A') {
+    if (!hidePrice && price && price !== 'N/A') {
         html += `<div class="hist-price">${price}</div>`;
     }
     return html;
@@ -25,7 +25,7 @@ function createMarketCard(market) {
     if (!mockData) return '';
     const renderMetric = (label, date, change) => `
         <div class="metric-box">
-            <span class="metric-label">${label}</span>
+            <span class="metric-label">${label}<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${date})</span></span>
             <span class="metric-value ${getPercentClass(change)}">${change.pct > 0 ? '+' : ''}${change.pct}%</span>
             <span class="metric-hist-price">${change.price}</span>
         </div>
@@ -113,7 +113,7 @@ function createSectorTableHTML(sectors) {
             </td>
             <td style="font-weight: 600;">
                 <div style="font-size: 1rem; margin-bottom: 4px;">${sector.value}</div>
-                <div style="font-weight: 500;">${formatPercent(sector.changes.today)}</div>
+                <div style="font-weight: 500;">${formatPercent(sector.changes.today, true)}</div>
             </td>
             <td>${formatPercent(sector.changes.d1)}</td>
             <td>${formatPercent(sector.changes.d3)}</td>
@@ -155,7 +155,7 @@ function renderSectors() {
 function createCompanyCard(company) {
     const renderMetric = (label, date, change) => `
         <div class="metric-box">
-            <span class="metric-label">${label}</span>
+            <span class="metric-label">${label}<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${date})</span></span>
             <span class="metric-value ${getPercentClass(change)}">${change.pct > 0 ? '+' : ''}${change.pct}%</span>
             <span class="metric-hist-price">${change.price}</span>
         </div>

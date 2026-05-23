@@ -685,26 +685,29 @@ def search_stock():
             return jsonify({"error": "주가 데이터를 찾을 수 없습니다."}), 404
         current_price = float(hist['Close'].iloc[-1])
 
-        def get_past_price(days_ago):
+        def get_past_data(days_ago):
             target_str = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
             past = hist.loc[:target_str]
-            return float(past['Close'].iloc[-1]) if not past.empty else None
+            if not past.empty:
+                return float(past['Close'].iloc[-1]), past.index[-1].strftime('%y.%m.%d')
+            return None, ""
 
-        def safe_pct(past_price):
+        def safe_pct(past_data):
+            past_price, past_date = past_data
             if past_price is None or past_price == 0:
-                return {"pct": 0.0, "price": "N/A"}
+                return {"pct": 0.0, "price": "N/A", "date": ""}
             return {"pct": round(((current_price - past_price) / past_price) * 100, 1),
-                    "price": f"{past_price:,.2f}"}
+                    "price": f"{past_price:,.2f}", "date": past_date}
 
         changes = {
-            "today": safe_pct(get_past_price(1)),
-            "d1":    safe_pct(get_past_price(1)),
-            "d3":    safe_pct(get_past_price(3)),
-            "w1":    safe_pct(get_past_price(7)),
-            "m1":    safe_pct(get_past_price(30)),
-            "m3":    safe_pct(get_past_price(90)),
-            "m6":    safe_pct(get_past_price(180)),
-            "y1":    safe_pct(get_past_price(365)),
+            "today": safe_pct(get_past_data(1)),
+            "d1":    safe_pct(get_past_data(1)),
+            "d3":    safe_pct(get_past_data(3)),
+            "w1":    safe_pct(get_past_data(7)),
+            "m1":    safe_pct(get_past_data(30)),
+            "m3":    safe_pct(get_past_data(90)),
+            "m6":    safe_pct(get_past_data(180)),
+            "y1":    safe_pct(get_past_data(365)),
         }
     except Exception as e:
         return jsonify({"error": f"주가 데이터 수집 실패: {e}"}), 500

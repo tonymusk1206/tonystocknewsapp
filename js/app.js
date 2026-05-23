@@ -247,8 +247,8 @@ function renderSearchPriceCard(data) {
                 <div style="font-size:0.82rem;color:#94a3b8;margin-top:2px;">${v.price}</div>`;
     };
     const box = (label, sub, change) => `
-        <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;min-width:110px;">
-            <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:6px;">${label}<br/><span style="font-size:0.7rem;">${sub}</span></div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;min-width:110px;text-align:center;">
+            <div style="font-size:0.8rem;color:#e2e8f0;font-weight:600;margin-bottom:6px;">${label}<br/><span style="font-size:0.75rem;font-weight:normal;color:#94a3b8;">(${sub})</span></div>
             ${pct(change)}
         </div>`;
 
