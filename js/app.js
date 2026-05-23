@@ -96,10 +96,32 @@ async function doSearch() {
         if (data.error) throw new Error(data.error);
 
         renderSearchPriceCard(data);
+        
+        // 기업 개요 렌더링
+        const profileContainer = document.getElementById('company-profile-container');
+        if (data.profile && Object.keys(data.profile).length > 0) {
+            profileContainer.innerHTML = `
+                <div class="glass-card" style="padding:1.5rem;">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+                        <span style="background:rgba(255,255,255,0.1);padding:6px 12px;border-radius:20px;font-size:0.9rem;color:#e2e8f0;font-weight:600;">#${data.name}</span>
+                        <span style="background:rgba(255,255,255,0.1);padding:6px 12px;border-radius:20px;font-size:0.9rem;color:#e2e8f0;font-weight:600;">#시가총액_${data.profile.marketCap}</span>
+                        <span style="background:rgba(255,255,255,0.1);padding:6px 12px;border-radius:20px;font-size:0.9rem;color:#e2e8f0;font-weight:600;">#${data.profile.sector}</span>
+                        <span style="background:rgba(255,255,255,0.1);padding:6px 12px;border-radius:20px;font-size:0.9rem;color:#e2e8f0;font-weight:600;">#${data.profile.industry}</span>
+                    </div>
+                    <div style="font-size:0.95rem;line-height:1.6;color:#cbd5e1;">
+                        ${data.profile.summary.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            `;
+            profileContainer.style.display = 'block';
+        } else {
+            profileContainer.style.display = 'none';
+        }
+
         renderTradingViewWidget(data.symbol);
         renderSearchNews(data.news);
         document.getElementById('link-naver-board').href = data.links.naver_board;
-        document.getElementById('link-naver-cafe').href  = data.links.naver_cafe;
+        
 
         elResult.style.display = 'block';
     } catch (err) {
