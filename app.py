@@ -354,29 +354,21 @@ def get_youtube_insights():
     base_dt_now = datetime.now().strftime("%Y.%m.%d")
     
     def fetch_channel(ch):
-        url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
+        url = f"https://decapi.me/youtube/latest_video?id={ch['id']}"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=5) as response:
-                xml_data = response.read().decode('utf-8')
-                entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
-                if entry_match:
-                    entry_text = entry_match.group(1)
-                    title_match = re.search(r'<title>(.*?)</title>', entry_text)
-                    title = title_match.group(1) if title_match else ""
-                    vid_match = re.search(r'<yt:videoId>(.*?)</yt:videoId>', entry_text)
-                    video_id = vid_match.group(1) if vid_match else ""
-                    if title and video_id:
-                        title = title.replace('<![CDATA[', '').replace(']]>', '').strip()
-                        pub_date = base_dt_now
-                        published_match = re.search(r'<published>(.*?)</published>', entry_text)
-                        if published_match:
-                            pub_raw = published_match.group(1)
-                            try:
-                                dt = datetime.strptime(pub_raw[:10], "%Y-%m-%d")
-                                pub_date = dt.strftime("%Y.%m.%d")
-                            except: pass
-                        return {"title": title, "channel": ch['name'], "date": pub_date, "link": f"https://www.youtube.com/watch?v={video_id}"}
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = resp.read().decode('utf-8').strip()
+                if " - https://youtu.be/" in result:
+                    parts = result.rsplit(" - https://youtu.be/", 1)
+                    title = parts[0].strip()
+                    link_href = "https://youtu.be/" + parts[1].strip()
+                    return {"title": title, "channel": ch['name'], "date": base_dt_now, "link": link_href}
+                elif " - https://youtube.com/watch?v=" in result:
+                    parts = result.rsplit(" - https://youtube.com/watch?v=", 1)
+                    title = parts[0].strip()
+                    link_href = "https://youtube.com/watch?v=" + parts[1].strip()
+                    return {"title": title, "channel": ch['name'], "date": base_dt_now, "link": link_href}
         except Exception:
             pass
         return {"title": f"[{ch['name']}] 최신 영상 로드 실패", "channel": ch['name'], "date": base_dt_now, "link": f"https://www.youtube.com/channel/{ch['id']}"}
