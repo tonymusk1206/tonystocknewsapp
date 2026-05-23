@@ -12,6 +12,11 @@ import re
 from collections import Counter
 import json
 from deep_translator import GoogleTranslator
+try:
+    from pytrends.request import TrendReq
+    PYTRENDS_AVAILABLE = True
+except ImportError:
+    PYTRENDS_AVAILABLE = False
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 CORS(app)
@@ -185,34 +190,132 @@ def parse_google_news_verified(url, required_count=10):
     return items
 
 def get_top10_news():
+    """
+    Bloomberg Five Things + WSJ What's News + Investing.com 주요 뉴스
+    에디터들이 엄선한 핵심 뉴스 제공
+    """
     feeds = [
-        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko",
-        "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR:ko",
-        "https://news.google.com/rss/search?q=증시+경제+금융&hl=ko&gl=KR&ceid=KR:ko"
+        # Bloomberg Markets RSS
+        "https://feeds.bloomberg.com/markets/news.rss",
+        # Bloomberg Top News
+        "https://feeds.bloomberg.com/politics/news.rss",
+        # WSJ Markets
+        "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+        # MarketWatch Top Stories
+        "https://feeds.marketwatch.com/marketwatch/topstories/",
+        # Financial Times
+        "https://www.ft.com/rss/home",
+        # Investing.com (fallback)
+        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en&gl=US&ceid=US:en",
+        "https://news.google.com/rss/search?q=stock+market+economy+finance&hl=en&gl=US&ceid=US:en",
     ]
+    translator = GoogleTranslator(source='auto', target='ko')
     collected_news = []
     seen_titles = set()
+
     for feed_url in feeds:
-        items = parse_google_news_verified(feed_url, required_count=30)
-        for it in items:
-            if it['title'] not in seen_titles:
-                seen_titles.add(it['title'])
-                collected_news.append(it)
-                if len(collected_news) >= 10: return collected_news[:10]
+        try:
+            req = urllib.request.Request(feed_url, headers={
+                'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
+                'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+            })
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                raw = resp.read()
+            root = ET.fromstring(raw.strip())
+            for item in root.findall('.//item'):
+                raw_title = item.findtext('title', '').strip()
+                link = item.findtext('link', '').strip()
+                pub_date = item.findtext('pubDate', '')
+                source_tag = item.findtext('source', '')
+
+                # 언론사 제거
+                clean_title = re.sub(r'\s-\s[^-]+$', '', raw_title).strip()
+                if not clean_title or len(clean_title) < 10:
+                    continue
+
+                # 중복 제거
+                title_key = clean_title[:40].lower()
+                if title_key in seen_titles:
+                    continue
+                seen_titles.add(title_key)
+
+                # 날짜 파싱
+                date_str = datetime.now().strftime("%Y.%m.%d")
+                try:
+                    dt = datetime.strptime(pub_date[:25], "%a, %d %b %Y %H:%M:%S")
+                    date_str = dt.strftime("%Y.%m.%d")
+                except:
+                    pass
+
+                # 한글 번역
+                try:
+                    translated = translator.translate(clean_title[:500])
+                except:
+                    translated = clean_title
+
+                hashtags = generate_news_hashtags(translated)
+                collected_news.append({
+                    "title": translated,
+                    "summary": translated,
+                    "source": source_tag or feed_url.split('/')[2],
+                    "hashtags": hashtags,
+                    "date": date_str,
+                    "time": "실시간",
+                    "link": link,
+                    "image": ""
+                })
+                if len(collected_news) >= 10:
+                    return collected_news[:10]
+        except Exception as e:
+            print(f"[News] Feed error {feed_url}: {e}")
+            continue
+
+    # 부족 시 한국어 구글 뉴스로 보완
+    if len(collected_news) < 10:
+        try:
+            kr_url = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko"
+            kr_items = parse_google_news_verified(kr_url, required_count=10 - len(collected_news))
+            for it in kr_items:
+                if it['title'][:30].lower() not in seen_titles:
+                    collected_news.append(it)
+                    if len(collected_news) >= 10:
+                        break
+        except:
+            pass
+
     return collected_news[:10]
 
 def extract_trending_keywords():
+    """
+    구글 트렌드 비즈니스·금융 섬터 실시간 방화벽 키워드 TOP10
+    """
+    # 1. pytrends로 구글 트렌드 실시간 트렌드 다운로드 시도
+    if PYTRENDS_AVAILABLE:
+        try:
+            pytrends = TrendReq(hl='ko-KR', tz=540, timeout=(10, 25), retries=2, backoff_factor=0.5)
+            # 카테고리 7 = Finance (Business & Finance)
+            trending = pytrends.trending_searches(pn='south_korea')
+            keywords = [kw for kw in trending[0].tolist() if len(kw) > 1][:10]
+            if keywords:
+                print(f"[Trends] pytrends 성공: {keywords}")
+                return keywords
+        except Exception as e:
+            print(f"[Trends] pytrends 실패: {e}")
+
+    # 2. 구글 뉴스 헤드라인 텍스트 마이닝 fallback
     feeds = [
         "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko",
-        "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR:ko",
-        "https://news.google.com/rss/search?q=증시+경제+금융&hl=ko&gl=KR&ceid=KR:ko"
+        "https://news.google.com/rss/search?q=증시+경제+금융&hl=ko&gl=KR&ceid=KR:ko",
+        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en&gl=US&ceid=US:en",
     ]
-    stopwords = set(["주식", "증시", "경제", "금융", "투자", "시장", "기업", "실적", "오늘", "내일", "이번", "주가", "상승", "하락", "급등", "급락", "돌파", "마감", "코스피", "코스닥", "미국", "한국", "뉴욕", "특징주", "단독", "종합", "속보", "분석", "전망", "목표가", "종목", "관심주", "추천주"])
+    stopwords = set(["주식", "증시", "경제", "금융", "투자", "시장", "기업", "실적", "오늘",
+                     "주가", "상승", "하락", "코스피", "코스닥", "특징주", "단독",
+                     "속보", "says", "new", "the", "and", "for", "its", "has", "are", "this", "that", "with"])
     words = []
     for url in feeds:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         try:
-            with urllib.request.urlopen(req, timeout=5) as response:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=6) as response:
                 root = ET.fromstring(response.read().strip())
                 for item in root.findall('.//item'):
                     title = item.findtext('title', '')
@@ -220,15 +323,13 @@ def extract_trending_keywords():
                         title = title.rsplit(" - ", 1)[0]
                     tokens = re.findall(r'[가-힣A-Za-z0-9]+', title)
                     for t in tokens:
-                        if len(t) > 1 and t not in stopwords:
+                        if len(t) > 1 and t.lower() not in stopwords:
                             words.append(t)
-        except Exception:
+        except:
             pass
     if not words:
-        return ["엔비디아", "금리인하", "비트코인", "테슬라", "애플", "삼성전자", "반도체", "AI", "배당", "환율"]
-    counter = Counter(words)
-    top10 = [word for word, count in counter.most_common(10)]
-    return top10
+        return ["엔비디아", "금리인하", "비트코인", "테슬라", "에플", "삼성전자", "반도체", "AI", "배당", "환율"]
+    return [w for w, _ in Counter(words).most_common(10)]
 
 def get_keyword_news(keywords):
     keyword_data = []
@@ -241,11 +342,11 @@ def get_keyword_news(keywords):
 
 def get_youtube_insights():
     channels = [
-        {"name": "슈카월드", "id": "UCsJ6RuBiTVWRX156FVbeaGg", "img": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80"},
-        {"name": "삼프로TV", "id": "UChbqbQB09zM4YwLIfk35Nzw", "img": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80"},
-        {"name": "소수몽키", "id": "UCb5iL51DrmB_qN6Wc3Gj04Q", "img": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80"},
-        {"name": "월가아재", "id": "UC-w3l14sA0t9P-eXm71lE_A", "img": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"},
-        {"name": "수페TV", "id": "UCYp6Xj6o1k4aA4o7z7yEGEw", "img": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&q=80"}
+        {"name": "슈카월드",   "id": "UCsJ6RuBiTVWRX156FVbeaGg"},
+        {"name": "삼프로TV",  "id": "UChbqbQB09zM4YwLIfk35Nzw"},
+        {"name": "소수몵키",  "id": "UCb5iL51DrmB_qN6Wc3Gj04Q"},
+        {"name": "월가아재",  "id": "UC-w3l14sA0t9P-eXm71lE_A"},
+        {"name": "수페TV",   "id": "UCYp6Xj6o1k4aA4o7z7yEGEw"},
     ]
     global rss_cache
     videos = []
@@ -292,28 +393,85 @@ def get_youtube_insights():
 
 def get_dynamic_quotes():
     leaders = [
-        {"author": "Jerome Powell", "role": "Federal Reserve Chairman", "query": "제롬 파월 연준", "img": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=100&q=80"},
-        {"author": "Warren Buffett", "role": "Berkshire Hathaway CEO", "query": "워런 버핏", "img": "https://images.unsplash.com/photo-1556157382-97eda2f9e2bf?w=100&q=80"},
-        {"author": "Elon Musk", "role": "Tesla & SpaceX CEO", "query": "일론 머스크 테슬라", "img": "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&q=80"},
-        {"author": "Jensen Huang", "role": "NVIDIA CEO", "query": "젠슨 황 엔비디아", "img": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"},
-        {"author": "Jamie Dimon", "role": "JPMorgan Chase CEO", "query": "제이미 다이먼 JP모건", "img": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"},
-        {"author": "Larry Fink", "role": "BlackRock CEO", "query": "래리 핑크 블랙록", "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"},
-        {"author": "Bill Gates", "role": "Microsoft Co-founder", "query": "빌 게이츠 마이크로소프트", "img": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"},
-        {"author": "Mark Zuckerberg", "role": "Meta CEO", "query": "마크 저커버그 메타", "img": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80"},
-        {"author": "Tim Cook", "role": "Apple CEO", "query": "팀 쿡 애플", "img": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&q=80"}
+        {"author": "Jerome Powell", "role": "Federal Reserve Chairman",
+         "query": "제롬 파월 연준", "en_query": "Jerome Powell Fed",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Jerome_H._Powell%2C_Federal_Reserve_portrait_%28cropped%29.jpg/120px-Jerome_H._Powell%2C_Federal_Reserve_portrait_%28cropped%29.jpg"},
+        {"author": "Warren Buffett", "role": "Berkshire Hathaway CEO",
+         "query": "워런 버핏 버크셔", "en_query": "Warren Buffett Berkshire",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Warren_Buffett_KU_Visit.jpg/120px-Warren_Buffett_KU_Visit.jpg"},
+        {"author": "Elon Musk", "role": "Tesla & SpaceX CEO",
+         "query": "일론 머스크 테슬라", "en_query": "Elon Musk Tesla SpaceX",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/120px-Elon_Musk_Royal_Society_%28crop2%29.jpg"},
+        {"author": "Jensen Huang", "role": "NVIDIA CEO",
+         "query": "젠슨 황 엔비디아", "en_query": "Jensen Huang NVIDIA",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Jensen_Huang_CES_2018.jpg/120px-Jensen_Huang_CES_2018.jpg"},
+        {"author": "Jamie Dimon", "role": "JPMorgan Chase CEO",
+         "query": "제이미 다이먼 JP모건", "en_query": "Jamie Dimon JPMorgan economy",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/JamieDimon.jpg/120px-JamieDimon.jpg"},
+        {"author": "Larry Fink", "role": "BlackRock CEO",
+         "query": "래리 핑크 블랙록", "en_query": "Larry Fink BlackRock markets",
+         "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&q=80"},
+        {"author": "Ray Dalio", "role": "Bridgewater Associates Founder",
+         "query": "레이 달리오 브리지워터", "en_query": "Ray Dalio economy markets",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Ray_Dalio_Davos_2019_%28cropped%29.jpg/120px-Ray_Dalio_Davos_2019_%28cropped%29.jpg"},
+        {"author": "Mark Zuckerberg", "role": "Meta CEO",
+         "query": "마크 저커버그 메타", "en_query": "Mark Zuckerberg Meta AI",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Mark_Zuckerberg_F8_2019_Keynote_%2832830578717%29_%28cropped%29.jpg/120px-Mark_Zuckerberg_F8_2019_Keynote_%2832830578717%29_%28cropped%29.jpg"},
+        {"author": "Tim Cook", "role": "Apple CEO",
+         "query": "팀 쿡 애플", "en_query": "Tim Cook Apple earnings",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Tim_Cook_2009_cropped.jpg/120px-Tim_Cook_2009_cropped.jpg"},
+        {"author": "Bill Gates", "role": "Bill & Melinda Gates Foundation",
+         "query": "빌 게이츠", "en_query": "Bill Gates technology economy",
+         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Bill_Gates_2017_%28cropped%29.jpg/120px-Bill_Gates_2017_%28cropped%29.jpg"},
     ]
     quotes_list = []
+    translator_inst = GoogleTranslator(source='auto', target='ko')
     for ld in leaders:
-        enc_q = urllib.parse.quote(ld['query'])
-        url = f"https://news.google.com/rss/search?q={enc_q}+when:7d&hl=ko&gl=KR&ceid=KR:ko"
-        n_items = parse_google_news_verified(url, required_count=1)
-        quote_text = f"\"{ld['author']}의 경제 및 산업 생태계에 대한 통찰력과 장기적 비전 전략에 주목하십시오.\""
+        # 영어 구글 뉴스 우선 (1주일 이내)
+        enc_q = urllib.parse.quote(ld['en_query'])
+        url = f"https://news.google.com/rss/search?q={enc_q}+when:7d&hl=en-US&gl=US&ceid=US:en"
+        quote_text = f'"{ld["author"]}의 최신 시장 동향과 경제적 관점을 주목하십시오."'
         link_href = f"https://www.google.com/search?q={urllib.parse.quote(ld['author'])}"
-        if n_items and len(n_items) > 0:
-            cleaned_title = n_items[0]['title'].replace('"', "'")
-            quote_text = f"\"{cleaned_title}\""
-            link_href = n_items[0]['link']
-        quotes_list.append({"text": quote_text, "author": ld['author'], "role": ld['role'], "date": datetime.now().strftime("%Y.%m.%d"), "link": link_href, "image": ld['img']})
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                root = ET.fromstring(resp.read().strip())
+            for item in root.findall('.//item'):
+                raw = item.findtext('title', '')
+                clean = re.sub(r'\s-\s[^-]+$', '', raw).strip()
+                if len(clean) > 15:
+                    try:
+                        clean_ko = translator_inst.translate(clean[:500])
+                    except:
+                        clean_ko = clean
+                    quote_text = f'"{clean_ko}"'
+                    link_href = item.findtext('link', link_href)
+                    break
+        except Exception as e:
+            # 영어 실패 시 한국어 재시도
+            try:
+                enc_q2 = urllib.parse.quote(ld['query'])
+                url2 = f"https://news.google.com/rss/search?q={enc_q2}+when:7d&hl=ko&gl=KR&ceid=KR:ko"
+                req2 = urllib.request.Request(url2, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req2, timeout=5) as resp2:
+                    root2 = ET.fromstring(resp2.read().strip())
+                for item2 in root2.findall('.//item'):
+                    raw2 = item2.findtext('title', '')
+                    clean2 = re.sub(r'\s-\s[^-]+$', '', raw2).strip()
+                    if len(clean2) > 10:
+                        quote_text = f'"{clean2}"'
+                        link_href = item2.findtext('link', link_href)
+                        break
+            except:
+                pass
+        quotes_list.append({
+            "text": quote_text,
+            "author": ld['author'],
+            "role": ld['role'],
+            "date": datetime.now().strftime("%Y.%m.%d"),
+            "link": link_href,
+            "image": ld['img']
+        })
     return quotes_list
 
 # ── RSS 초기 캐시 ──
