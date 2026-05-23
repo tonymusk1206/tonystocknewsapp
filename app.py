@@ -602,27 +602,110 @@ def fetch_and_cache_market_data():
     except Exception as e:
         print(f"[BG Market] ❌ 오류: {e}")
 
+# ── 번역 없는 빠른 뉴스 (초기 로딩용) ──
+def _get_news_fast():
+    """번역 없이 영어 제목 그대로 반환 - 빠른 초기 로딩용"""
+    feeds = [
+        "https://feeds.bloomberg.com/markets/news.rss",
+        "https://feeds.marketwatch.com/marketwatch/topstories/",
+        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en&gl=US&ceid=US:en",
+    ]
+    collected, seen = [], set()
+    for feed_url in feeds:
+        try:
+            req = urllib.request.Request(feed_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                root = ET.fromstring(resp.read().strip())
+            for item in root.findall('.//item'):
+                raw = item.findtext('title', '').strip()
+                link = item.findtext('link', '').strip()
+                clean = re.sub(r'\s-\s[^-]+$', '', raw).strip()
+                if len(clean) < 10: continue
+                key = clean[:40].lower()
+                if key in seen: continue
+                seen.add(key)
+                collected.append({
+                    "title": clean, "summary": clean,
+                    "source": item.findtext('source', feed_url.split('/')[2]),
+                    "hashtags": generate_news_hashtags(clean),
+                    "date": datetime.now().strftime("%Y.%m.%d"),
+                    "time": "실시간", "link": link, "image": ""
+                })
+                if len(collected) >= 10: return collected
+        except: pass
+    return collected
+
+# ── 번역 없는 빠른 인사 발언 (초기 로딩용) ──
+def _get_quotes_fast():
+    """번역 없이 영어 기사 제목 그대로 - 빠른 초기 로딩용"""
+    leaders_simple = [
+        ("Jerome Powell", "Federal Reserve Chairman", "Jerome Powell Fed"),
+        ("Warren Buffett", "Berkshire Hathaway CEO", "Warren Buffett Berkshire"),
+        ("Elon Musk", "Tesla & SpaceX CEO", "Elon Musk Tesla"),
+        ("Jensen Huang", "NVIDIA CEO", "Jensen Huang NVIDIA"),
+        ("Jamie Dimon", "JPMorgan Chase CEO", "Jamie Dimon JPMorgan"),
+        ("Larry Fink", "BlackRock CEO", "Larry Fink BlackRock"),
+        ("Ray Dalio", "Bridgewater Founder", "Ray Dalio economy"),
+        ("Mark Zuckerberg", "Meta CEO", "Mark Zuckerberg Meta"),
+        ("Tim Cook", "Apple CEO", "Tim Cook Apple"),
+        ("Bill Gates", "Gates Foundation", "Bill Gates technology"),
+    ]
+    results = []
+    for author, role, query in leaders_simple:
+        enc = urllib.parse.quote(query)
+        url = f"https://news.google.com/rss/search?q={enc}+when:7d&hl=en-US&gl=US&ceid=US:en"
+        text = f'"{author}의 최신 시장 동향과 경제적 관점을 주목하십시오."'
+        link = f"https://www.google.com/search?q={urllib.parse.quote(author)}"
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                root = ET.fromstring(resp.read().strip())
+            for item in root.findall('.//item'):
+                raw = item.findtext('title', '')
+                clean = re.sub(r'\s-\s[^-]+$', '', raw).strip()
+                if len(clean) > 15:
+                    text = f'"{clean}"'
+                    link = item.findtext('link', link)
+                    break
+        except: pass
+        results.append({"text": text, "author": author, "role": role,
+                        "date": datetime.now().strftime("%Y.%m.%d"), "link": link,
+                        "image": f"https://www.google.com/search?q={urllib.parse.quote(author)}"})
+    return results
+
 # ── 백그라운드 RSS + 주식 데이터 통합 갱신 스레드 ──
 def update_rss_cache_background():
     global rss_cache
-    time.sleep(3)  # 서버 부팅 완료 대기
+    time.sleep(2)  # 서버 부팅 완료 대기
     try:
-        print("[Background Engine] 🔄 최초 RSS/유튜브/주식 데이터 수집 시작...")
+        # ① 주식 데이터를 가장 먼저 수집 (사용자가 주가를 먼저 보도록)
+        print("[Background Engine] 🔄 주식 데이터 최우선 수집 시작...")
+        fetch_and_cache_market_data()
+        print("[Background Engine] ✅ 주식 데이터 완료!")
+
+        # ② 번역 없는 빠른 뉴스/발언 먼저 캐시
+        print("[Background Engine] 🔄 빠른 RSS 수집 (번역 전)...")
         keywords = extract_trending_keywords()
-        t_news = get_top10_news()
+        t_news_fast = _get_news_fast()
         k_news = get_keyword_news(keywords)
         y_insights = get_youtube_insights()
-        d_quotes = get_dynamic_quotes()
+        d_quotes_fast = _get_quotes_fast()
         with rss_cache["lock"]:
-            if t_news: rss_cache["top10_news"] = t_news
-            if k_news: rss_cache["keyword_news"] = k_news
-            if y_insights: rss_cache["youtube_insights"] = y_insights
-            if d_quotes: rss_cache["dynamic_quotes"] = d_quotes
+            if t_news_fast:   rss_cache["top10_news"]     = t_news_fast
+            if k_news:        rss_cache["keyword_news"]   = k_news
+            if y_insights:    rss_cache["youtube_insights"] = y_insights
+            if d_quotes_fast: rss_cache["dynamic_quotes"] = d_quotes_fast
+        print("[Background Engine] ✅ 빠른 RSS 완료!")
+
+        # ③ 한글 번역 포함 정확한 버전으로 교체
+        print("[Background Engine] 🔄 한글 번역 뉴스/발언 수집...")
+        t_news_ko = get_top10_news()
+        d_quotes_ko = get_dynamic_quotes()
+        with rss_cache["lock"]:
+            if t_news_ko:   rss_cache["top10_news"]   = t_news_ko
+            if d_quotes_ko: rss_cache["dynamic_quotes"] = d_quotes_ko
             rss_cache["last_updated"] = time.time()
-        print("[Background Engine] ✅ RSS 최초 갱신 완료!")
-        print("[Background Engine] 🔄 주식 데이터 최초 수집 시작...")
-        fetch_and_cache_market_data()
-        print("[Background Engine] ✅ 주식 데이터 최초 수집 완료!")
+        print("[Background Engine] ✅ 한글 번역 완료!")
     except Exception as e:
         print(f"[Background Engine] ❌ 최초 갱신 오류: {e}")
 
@@ -630,22 +713,22 @@ def update_rss_cache_background():
         time.sleep(600)  # 10분 대기
         try:
             print("[Background Engine] 🔄 주기적 RSS/주식 데이터 갱신...")
+            fetch_and_cache_market_data()
             keywords = extract_trending_keywords()
             t_news = get_top10_news()
             k_news = get_keyword_news(keywords)
             y_insights = get_youtube_insights()
             d_quotes = get_dynamic_quotes()
             with rss_cache["lock"]:
-                if t_news: rss_cache["top10_news"] = t_news
-                if k_news: rss_cache["keyword_news"] = k_news
+                if t_news:     rss_cache["top10_news"]     = t_news
+                if k_news:     rss_cache["keyword_news"]   = k_news
                 if y_insights: rss_cache["youtube_insights"] = y_insights
-                if d_quotes: rss_cache["dynamic_quotes"] = d_quotes
+                if d_quotes:   rss_cache["dynamic_quotes"] = d_quotes
                 rss_cache["last_updated"] = time.time()
-            print("[Background Engine] ✅ RSS 주기적 갱신 완료!")
-            fetch_and_cache_market_data()
-            print("[Background Engine] ✅ 주식 데이터 주기적 갱신 완료!")
+            print("[Background Engine] ✅ 주기적 갱신 완료!")
         except Exception as e:
             print(f"[Background Engine] ❌ 주기적 갱신 오류: {e}")
+
 
 @app.route("/")
 def home():
