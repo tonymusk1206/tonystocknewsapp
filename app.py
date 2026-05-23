@@ -341,6 +341,8 @@ def get_keyword_news(keywords):
         keyword_data.append({"keyword": kw, "news": k_news})
     return keyword_data
 
+import xml.etree.ElementTree as ET
+
 def get_youtube_insights():
     channels = [
         {"name": "슈카월드", "id": "UCsJ6RuBiTVWRX156FVbeaGg"},
@@ -351,32 +353,37 @@ def get_youtube_insights():
         {"name": "수페TV", "id": "UCfnqgWlC5IvJEAPTmyjaixA"},
         {"name": "이효석아카데미", "id": "UCxvdCnvGODDyuvnELnLkQWw"}
     ]
-    base_dt_now = datetime.now().strftime("%Y.%m.%d")
     
     def fetch_channel(ch):
-        url = f"https://decapi.me/youtube/latest_video?id={ch['id']}"
+        url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req, timeout=10) as resp:
-                result = resp.read().decode('utf-8').strip()
-                if " - https://youtu.be/" in result:
-                    parts = result.rsplit(" - https://youtu.be/", 1)
-                    title = parts[0].strip()
-                    link_href = "https://youtu.be/" + parts[1].strip()
-                    return {"title": title, "channel": ch['name'], "date": base_dt_now, "link": link_href}
-                elif " - https://youtube.com/watch?v=" in result:
-                    parts = result.rsplit(" - https://youtube.com/watch?v=", 1)
-                    title = parts[0].strip()
-                    link_href = "https://youtube.com/watch?v=" + parts[1].strip()
-                    return {"title": title, "channel": ch['name'], "date": base_dt_now, "link": link_href}
-        except Exception:
-            pass
-        return {"title": f"[{ch['name']}] 최신 영상 로드 실패", "channel": ch['name'], "date": base_dt_now, "link": f"https://www.youtube.com/channel/{ch['id']}"}
+                xml_data = resp.read()
+                root = ET.fromstring(xml_data)
+                ns = {'yt': 'http://www.youtube.com/xml/schemas/2015', 'atom': 'http://www.w3.org/2005/Atom'}
+                entry = root.find('atom:entry', ns)
+                if entry is not None:
+                    title = entry.find('atom:title', ns).text
+                    link = entry.find('atom:link', ns).attrib['href']
+                    published = entry.find('atom:published', ns).text
+                    pub_date = published.split('T')[0].replace('-', '.')
+                    return {"title": title, "channel": ch["name"], "date": pub_date, "link": link}
+        except Exception as e:
+            print(f"[YouTube] Error fetching {ch['name']}: {e}")
         
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        videos = list(executor.map(fetch_channel, channels))
-        
-    return videos
+        base_dt_now = datetime.now().strftime("%Y.%m.%d")
+        return {"title": f"[{ch['name']}] 최신 유튜브 영상", "channel": ch["name"], "date": base_dt_now, "link": f"https://www.youtube.com/channel/{ch['id']}"}
+
+    results = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_ch = {executor.submit(fetch_channel, ch): ch for ch in channels}
+        for future in as_completed(future_to_ch):
+            res = future.result()
+            if res:
+                results.append(res)
+    return results
+
 def get_dynamic_quotes():
     leaders = [
         {"author": "Warren Buffett", "role": "Berkshire Hathaway CEO", "query": "워런 버핏", "en_query": "Warren Buffett", "fallback_quote": '"시장이 탐욕스러울 때 두려워하고, 시장이 두려워할 때 탐욕스러워져야 합니다."'},
