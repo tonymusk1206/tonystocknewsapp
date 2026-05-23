@@ -629,9 +629,17 @@ def ping():
     """슬립 방지 전용 초경량 엔드포인트 — 즉시 200 응답, 연산 없음"""
     return jsonify({"status": "alive", "ts": time.time()}), 200
 
+
+_thread_started = False
+
 @app.route('/api/market-data')
 def market_data():
-    global data_cache
+    global data_cache, _thread_started
+    if not _thread_started:
+        _thread_started = True
+        import threading
+        threading.Thread(target=update_rss_cache_background, daemon=True).start()
+
     # ★ 캐시가 있으면 즉시 반환 (yfinance 호출 없음, 0.1초 이내, 절대 502 없음)
     if data_cache["data"] is not None:
         cached = dict(data_cache["data"])
@@ -763,7 +771,7 @@ def search_stock():
     })
 
 # 서버 메인 루프 실행 전 비동기 스레드 스타트
-threading.Thread(target=update_rss_cache_background, daemon=True).start()
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host="0.0.0.0")
