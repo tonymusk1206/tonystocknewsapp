@@ -319,16 +319,8 @@ function renderYoutube() {
     
     container.innerHTML = mockData.youtube.map(video => `
         <a href="${video.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch; background: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.2);">
-            ${video.image && video.image.includes('ytimg.com') ? `
-            <div style="flex: 0 0 180px; border-radius: 8px; overflow: hidden; position: relative;">
-                <img src="${video.image}" alt="Youtube thumbnail" style="width: 100%; height: 100%; object-fit: cover;" />
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px; color: white; display:flex; align-items:center; gap: 5px;">
-                   <span style="color: #ef4444; font-weight: bold; font-size: 1.2rem;">▶</span> Play
-                </div>
-            </div>` : ''}
             <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
                 <h3 style="transition: color 0.2s;">${video.title}</h3>
-                <p style="margin-top: 8px;">${video.summary}</p>
                 <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center;">
                     <span style="color:#ef4444; font-weight: 700;">${video.channel}</span>
                     <span>|</span>

@@ -342,111 +342,91 @@ def get_keyword_news(keywords):
 
 def get_youtube_insights():
     channels = [
-        {"name": "슈카월드",   "id": "UCsJ6RuBiTVWRX156FVbeaGg"},
-        {"name": "삼프로TV",  "id": "UChbqbQB09zM4YwLIfk35Nzw"},
-        {"name": "소수몵키",  "id": "UCb5iL51DrmB_qN6Wc3Gj04Q"},
-        {"name": "월가아재",  "id": "UC-w3l14sA0t9P-eXm71lE_A"},
-        {"name": "수페TV",   "id": "UCYp6Xj6o1k4aA4o7z7yEGEw"},
+        {"name": "슈카월드", "id": "UCsJ6RuBiTVWRX156FVbeaGg"},
+        {"name": "월가아재의과학적투자", "id": "UCJptR2r0YqXv1628J0pXpCw"},
+        {"name": "박종훈지식한방", "id": "UC5cKPnu2NpaxKjU2UBuvVxA"},
+        {"name": "소수몽키", "id": "UC_t11S41W6N6hA4FqM3Bwbw"},
+        {"name": "전인구경제연구소", "id": "UCznImSIaxZR7fdLCICLdgaQ"},
+        {"name": "수페TV", "id": "UCiM27z7jO8O8xntKzF6Lh1A"},
+        {"name": "이효석아카데미", "id": "UCn6a15h1H1Z61K8Pj_66G-A"}
     ]
-    global rss_cache
     videos = []
-    old_videos_map = {v['channel']: v for v in rss_cache.get("youtube_insights", [])}
     base_dt_now = datetime.now().strftime("%Y.%m.%d")
-    fallback_data = {
-        "슈카월드": {"title": "[슈카월드] 최근 글로벌 증시 및 주요 경제 이슈 분석", "link": "https://www.youtube.com/channel/UCsJ6RuBiTVWRX156FVbeaGg"},
-        "삼프로TV": {"title": "[삼프로TV] 오늘장 핵심 이슈와 월가 거물들의 포트폴리오 전략", "link": "https://www.youtube.com/channel/UChbEQXDcwPEyP3rC18H_3oQ"},
-        "소수몽키": {"title": "[소수몽키] 서학개미 필독! 이번 주 실적 발표 및 주요 테크주 체크리스트", "link": "https://www.youtube.com/channel/UC_t11S41W6N6hA4FqM3Bwbw"},
-        "월가아재": {"title": "[월가아재] 퀀트 분석으로 바라본 현재 시장의 버블 지수와 안전마진", "link": "https://www.youtube.com/channel/UCJptR2r0YqXv1628J0pXpCw"},
-        "수페TV": {"title": "[수페TV] 장기 투자자를 위한 배당성장주 탑픽 및 섹터별 자산 배분 가이드", "link": "https://www.youtube.com/channel/UCiM27z7jO8O8xntKzF6Lh1A"}
-    }
     for ch in channels:
         url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
         success = False
-        for attempt in range(1): # Reduced from 3 to 1 to prevent blocking thread for minutes
-            try:
-                headers = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'ko-KR,ko;q=0.9', 'Cache-Control': 'no-cache'}
-                req = urllib.request.Request(url, headers=headers)
-                with urllib.request.urlopen(req, timeout=3) as response: # Reduced timeout to 3s
-                    xml_data = response.read().decode('utf-8')
-                    entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
-                    if entry_match:
-                        entry_text = entry_match.group(1)
-                        title_match = re.search(r'<title>(.*?)</title>', entry_text)
-                        title = title_match.group(1) if title_match else ""
-                        vid_match = re.search(r'<yt:videoId>(.*?)</yt:videoId>', entry_text)
-                        video_id = vid_match.group(1) if vid_match else ""
-                        if title and video_id:
-                            title = title.replace('<![CDATA[', '').replace(']]>', '').strip()
-                            videos.append({"title": title, "channel": ch['name'], "summary": f"{ch['name']} 채널의 실시간 최신 분석 영상입니다.", "date": base_dt_now, "link": f"https://www.youtube.com/watch?v={video_id}", "image": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"})
-                            success = True
-                            break
-            except Exception as e:
-                pass
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=4) as response:
+                xml_data = response.read().decode('utf-8')
+                entry_match = re.search(r'<entry>(.*?)</entry>', xml_data, re.DOTALL)
+                if entry_match:
+                    entry_text = entry_match.group(1)
+                    title_match = re.search(r'<title>(.*?)</title>', entry_text)
+                    title = title_match.group(1) if title_match else ""
+                    vid_match = re.search(r'<yt:videoId>(.*?)</yt:videoId>', entry_text)
+                    video_id = vid_match.group(1) if vid_match else ""
+                    if title and video_id:
+                        title = title.replace('<![CDATA[', '').replace(']]>', '').strip()
+                        pub_date = base_dt_now
+                        published_match = re.search(r'<published>(.*?)</published>', entry_text)
+                        if published_match:
+                            pub_raw = published_match.group(1)
+                            try:
+                                dt = datetime.strptime(pub_raw[:10], "%Y-%m-%d")
+                                pub_date = dt.strftime("%Y.%m.%d")
+                            except: pass
+                        videos.append({"title": title, "channel": ch['name'], "date": pub_date, "link": f"https://www.youtube.com/watch?v={video_id}"})
+                        success = True
+        except Exception as e:
+            pass
         if not success:
-            print(f"YouTube parse error for {ch['name']} after 3 attempts.")
-            if ch['name'] in old_videos_map:
-                videos.append(old_videos_map[ch['name']])
-            else:
-                fb = fallback_data.get(ch['name'], {"title": f"[{ch['name']}] 주요 경제 분석 영상", "link": f"https://www.youtube.com/channel/{ch['id']}"})
-                videos.append({"title": fb["title"], "channel": ch['name'], "summary": f"{ch['name']} 채널의 주요 분석 영상입니다.", "date": base_dt_now, "link": fb["link"], "image": ch['img']})
+            videos.append({"title": f"[{ch['name']}] 최신 업로드 영상", "channel": ch['name'], "date": base_dt_now, "link": f"https://www.youtube.com/channel/{ch['id']}"})
     return videos
-
 def get_dynamic_quotes():
     leaders = [
-        {"author": "Jerome Powell", "role": "Federal Reserve Chairman",
-         "query": "제롬 파월 연준", "en_query": "Jerome Powell Fed",
-         "fallback_quote": '"인플레이션이 목표치인 2%를 향해 지속적으로 둔화하고 있다는 확신이 들 때까지 제약적인 통화정책을 유지할 것입니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Jerome_H._Powell%2C_Federal_Reserve_portrait_%28cropped%29.jpg/120px-Jerome_H._Powell%2C_Federal_Reserve_portrait_%28cropped%29.jpg"},
         {"author": "Warren Buffett", "role": "Berkshire Hathaway CEO",
-         "query": "워런 버핏 버크셔", "en_query": "Warren Buffett Berkshire",
-         "fallback_quote": '"시장이 탐욕스러울 때 두려워하고, 시장이 두려워할 때 탐욕스러워져야 합니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Warren_Buffett_KU_Visit.jpg/120px-Warren_Buffett_KU_Visit.jpg"},
-        {"author": "Elon Musk", "role": "Tesla & SpaceX CEO",
-         "query": "일론 머스크 테슬라", "en_query": "Elon Musk Tesla SpaceX",
-         "fallback_quote": '"자율주행과 AI는 테슬라의 미래이자, 세상을 바꿀 가장 중요한 기술적 진보입니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/120px-Elon_Musk_Royal_Society_%28crop2%29.jpg"},
-        {"author": "Jensen Huang", "role": "NVIDIA CEO",
-         "query": "젠슨 황 엔비디아", "en_query": "Jensen Huang NVIDIA",
-         "fallback_quote": '"생성형 AI는 새로운 산업 혁명의 시작이며, 모든 비즈니스는 AI 공장이 될 것입니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Jensen_Huang_CES_2018.jpg/120px-Jensen_Huang_CES_2018.jpg"},
-        {"author": "Jamie Dimon", "role": "JPMorgan Chase CEO",
-         "query": "제이미 다이먼 JP모건", "en_query": "Jamie Dimon JPMorgan economy",
-         "fallback_quote": '"지정학적 리스크와 인플레이션 고착화 가능성에 대비해 경제의 불확실성을 예의주시해야 합니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/JamieDimon.jpg/120px-JamieDimon.jpg"},
-        {"author": "Larry Fink", "role": "BlackRock CEO",
-         "query": "래리 핑크 블랙록", "en_query": "Larry Fink BlackRock markets",
-         "fallback_quote": '"장기적인 관점에서 자본 시장은 여전히 부를 창출하는 가장 강력한 엔진입니다."',
-         "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&q=80"},
-        {"author": "Ray Dalio", "role": "Bridgewater Associates Founder",
-         "query": "레이 달리오 브리지워터", "en_query": "Ray Dalio economy markets",
-         "fallback_quote": '"변화하는 세계 질서 속에서 투자자들은 포트폴리오의 다각화와 현금의 가치 하락에 대비해야 합니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Ray_Dalio_Davos_2019_%28cropped%29.jpg/120px-Ray_Dalio_Davos_2019_%28cropped%29.jpg"},
-        {"author": "Mark Zuckerberg", "role": "Meta CEO",
-         "query": "마크 저커버그 메타", "en_query": "Mark Zuckerberg Meta AI",
-         "fallback_quote": '"오픈소스 AI와 메타버스는 우리가 사람들을 연결하고 미래의 디지털 환경을 구축하는 핵심입니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Mark_Zuckerberg_F8_2019_Keynote_%2832830578717%29_%28cropped%29.jpg/120px-Mark_Zuckerberg_F8_2019_Keynote_%2832830578717%29_%28cropped%29.jpg"},
-        {"author": "Tim Cook", "role": "Apple CEO",
-         "query": "팀 쿡 애플", "en_query": "Tim Cook Apple earnings",
-         "fallback_quote": '"우리는 AI가 우리의 일상적인 기기에서 사용자의 프라이버시를 보호하면서 삶을 어떻게 풍요롭게 할 수 있는지에 집중합니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Tim_Cook_2009_cropped.jpg/120px-Tim_Cook_2009_cropped.jpg"},
-        {"author": "Bill Gates", "role": "Bill & Melinda Gates Foundation",
-         "query": "빌 게이츠", "en_query": "Bill Gates technology economy",
-         "fallback_quote": '"AI 발전은 인터넷이나 스마트폰의 등장만큼이나 혁명적이며, 모든 지식 노동의 생산성을 근본적으로 바꿀 것입니다."',
-         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Bill_Gates_2017_%28cropped%29.jpg/120px-Bill_Gates_2017_%28cropped%29.jpg"},
+         "query": "워런 버핏", "en_query": "Warren Buffett",
+         "fallback_quote": '"시장이 탐욕스러울 때 두려워하고, 시장이 두려워할 때 탐욕스러워져야 합니다."'},
+        {"author": "Bill Ackman", "role": "Pershing Square Capital CEO",
+         "query": "빌 에크먼", "en_query": "Bill Ackman",
+         "fallback_quote": '"최고의 투자는 위기 상황에서 인내심을 갖고 가치 있는 자산을 헐값에 매입하는 것입니다."'},
+        {"author": "Howard Marks", "role": "Oaktree Capital Co-Chairman",
+         "query": "하워드 막스", "en_query": "Howard Marks",
+         "fallback_quote": '"가장 중요한 것은 무엇을 아느냐가 아니라 우리가 모른다는 사실을 아는 것입니다."'},
+        {"author": "Mark Minervini", "role": "Author & Trader",
+         "query": "마크 미너비니", "en_query": "Mark Minervini",
+         "fallback_quote": '"성공적인 트레이딩의 핵심은 손실은 짧게 끊고 이익은 길게 가져가는 규율에 있습니다."'},
+        {"author": "Stanley Druckenmiller", "role": "Duquesne Family Office",
+         "query": "스탠리 드러켄밀러", "en_query": "Stanley Druckenmiller",
+         "fallback_quote": '"맞고 틀리는 것이 중요한 게 아니라, 맞았을 때 얼마나 많이 벌고 틀렸을 때 얼마나 적게 잃는지가 중요합니다."'},
+        {"author": "Paul Tudor Jones", "role": "Tudor Investment Corp",
+         "query": "폴 튜더 존스", "en_query": "Paul Tudor Jones",
+         "fallback_quote": '"당신이 할 수 있는 가장 중요한 룰은 방어적인 플레이를 하는 것입니다. 결코 공격적인 플레이가 아닙니다."'},
+        {"author": "Kevin Warsh", "role": "Former Federal Reserve Governor",
+         "query": "케빈 워시", "en_query": "Kevin Warsh Fed",
+         "fallback_quote": '"연준의 통화정책은 시장의 기대에 끌려다니기보다 선제적으로 실물 경제의 펀더멘털을 반영해야 합니다."'},
     ]
     quotes_list = []
     translator_inst = GoogleTranslator(source='auto', target='ko')
     for ld in leaders:
-        # 영어 구글 뉴스 우선 (1주일 이내)
         enc_q = urllib.parse.quote(ld['en_query'])
         url = f"https://news.google.com/rss/search?q={enc_q}+when:7d&hl=en-US&gl=US&ceid=US:en"
         quote_text = ld["fallback_quote"]
         link_href = f"https://www.google.com/search?q={urllib.parse.quote(ld['author'])}"
+        pub_date = datetime.now().strftime("%Y.%m.%d")
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req, timeout=6) as resp:
                 root = ET.fromstring(resp.read().strip())
             for item in root.findall('.//item'):
+                pub_date_node = item.find('pubDate')
+                if pub_date_node is not None:
+                    try:
+                        dt = datetime.strptime(pub_date_node.text[:25], "%a, %d %b %Y %H:%M:%S")
+                        pub_date = dt.strftime("%Y.%m.%d")
+                    except: pass
                 raw = item.findtext('title', '')
                 clean = re.sub(r'\s-\s[^-]+$', '', raw).strip()
                 if len(clean) > 15:
@@ -458,38 +438,18 @@ def get_dynamic_quotes():
                     link_href = item.findtext('link', link_href)
                     break
         except Exception as e:
-            # 영어 실패 시 한국어 재시도
-            try:
-                enc_q2 = urllib.parse.quote(ld['query'])
-                url2 = f"https://news.google.com/rss/search?q={enc_q2}+when:7d&hl=ko&gl=KR&ceid=KR:ko"
-                req2 = urllib.request.Request(url2, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req2, timeout=5) as resp2:
-                    root2 = ET.fromstring(resp2.read().strip())
-                for item2 in root2.findall('.//item'):
-                    raw2 = item2.findtext('title', '')
-                    clean2 = re.sub(r'\s-\s[^-]+$', '', raw2).strip()
-                    if len(clean2) > 10:
-                        quote_text = f'"{clean2}"'
-                        link_href = item2.findtext('link', link_href)
-                        break
-            except:
-                pass
+            pass
         quotes_list.append({
-            "text": quote_text,
-            "author": ld['author'],
-            "role": ld['role'],
-            "date": datetime.now().strftime("%Y.%m.%d"),
-            "link": link_href,
-            "image": ld['img']
+            "text": quote_text, "author": ld["author"], "role": ld["role"],
+            "date": pub_date, "link": link_href
         })
     return quotes_list
-
 # ── RSS 초기 캐시 ──
 rss_cache = {
-    "top10_news": [{"title": "美 연준 이사진, 인플레이션 둔화세에 연내 금리 인하 가능성 시사", "summary": "통화정책 방향성을 가늠할 핵심 매크로 지표 발표 속 증시 자금 유입이 지속됩니다.", "source": "출처: WSJ", "hashtags": "#Fed통화정책 #금리인하 #유동성촉각", "date": base_dt, "time": "실시간", "link": "https://www.wsj.com", "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80"}, {"title": "엔비디아 차세대 AI 칩 수요 폭발... 반도체 밸류체인 전반 슈퍼사이클 진입", "summary": "빅테크 기업들의 인프라 투자 확대로 관련 장비 및 부품주들의 실적 상향이 기대됩니다.", "source": "출처: Bloomberg", "hashtags": "#AI슈퍼사이클 #반도체랠리 #빅테크주도주", "date": base_dt, "time": "실시간", "link": "https://www.bloomberg.com", "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80"}],
-    "keyword_news": [{"keyword": "엔비디아", "news": []}, {"keyword": "금리인하", "news": []}, {"keyword": "비트코인", "news": []}, {"keyword": "테슬라", "news": []}, {"keyword": "밸류업", "news": []}],
-    "youtube_insights": [{"title": "[슈카월드] 끝없이 오르는 미국 증시와 AI 반도체 전쟁의 승자는?", "channel": "슈카월드", "summary": "글로벌 매크로 지표 분석", "date": base_dt, "link": "https://www.youtube.com/watch?v=1", "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80"}],
-    "dynamic_quotes": [{"text": "\"인플레이션 목표치 달성을 향한 경로에 확신이 들 때까지 통화정책의 인내심을 유지할 것입니다.\"", "author": "Jerome Powell", "role": "Federal Reserve Chairman", "date": base_dt, "link": "https://www.federalreserve.gov", "image": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=100&q=80"}],
+    "top10_news": [],
+    "keyword_news": [],
+    "youtube_insights": [],
+    "dynamic_quotes": [],
     "last_updated": time.time(),
     "lock": threading.Lock()
 }
