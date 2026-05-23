@@ -598,9 +598,9 @@ def fetch_and_cache_market_data():
         }
         data_cache["data"] = result
         data_cache["last_updated"] = time.time()
-        print("[BG Market] ✅ 주식 데이터 캐시 갱신 완료!")
+        print("[BG Market] [SUCCESS] 주식 데이터 캐시 갱신 완료!")
     except Exception as e:
-        print(f"[BG Market] ❌ 오류: {e}")
+        print(f"[BG Market] [ERROR] 오류: {e}")
 
 # ── 번역 없는 빠른 뉴스 (초기 로딩용) ──
 def _get_news_fast():
@@ -679,12 +679,12 @@ def update_rss_cache_background():
     time.sleep(2)  # 서버 부팅 완료 대기
     try:
         # ① 주식 데이터를 가장 먼저 수집 (사용자가 주가를 먼저 보도록)
-        print("[Background Engine] 🔄 주식 데이터 최우선 수집 시작...")
+        print("[Background Engine] [START] 주식 데이터 최우선 수집 시작...")
         fetch_and_cache_market_data()
-        print("[Background Engine] ✅ 주식 데이터 완료!")
+        print("[Background Engine] [DONE] 주식 데이터 완료!")
 
         # ② 번역 없는 빠른 뉴스/발언 먼저 캐시
-        print("[Background Engine] 🔄 빠른 RSS 수집 (번역 전)...")
+        print("[Background Engine] [START] 빠른 RSS 수집 (번역 전)...")
         keywords = extract_trending_keywords()
         t_news_fast = _get_news_fast()
         k_news = get_keyword_news(keywords)
@@ -695,24 +695,24 @@ def update_rss_cache_background():
             if k_news:        rss_cache["keyword_news"]   = k_news
             if y_insights:    rss_cache["youtube_insights"] = y_insights
             if d_quotes_fast: rss_cache["dynamic_quotes"] = d_quotes_fast
-        print("[Background Engine] ✅ 빠른 RSS 완료!")
+        print("[Background Engine] [DONE] 빠른 RSS 완료!")
 
         # ③ 한글 번역 포함 정확한 버전으로 교체
-        print("[Background Engine] 🔄 한글 번역 뉴스/발언 수집...")
+        print("[Background Engine] [START] 한글 번역 뉴스/발언 수집...")
         t_news_ko = get_top10_news()
         d_quotes_ko = get_dynamic_quotes()
         with rss_cache["lock"]:
             if t_news_ko:   rss_cache["top10_news"]   = t_news_ko
             if d_quotes_ko: rss_cache["dynamic_quotes"] = d_quotes_ko
             rss_cache["last_updated"] = time.time()
-        print("[Background Engine] ✅ 한글 번역 완료!")
+        print("[Background Engine] [DONE] 한글 번역 완료!")
     except Exception as e:
-        print(f"[Background Engine] ❌ 최초 갱신 오류: {e}")
+        print(f"[Background Engine] [ERROR] 최초 갱신 오류: {e}")
 
     while True:
         time.sleep(600)  # 10분 대기
         try:
-            print("[Background Engine] 🔄 주기적 RSS/주식 데이터 갱신...")
+            print("[Background Engine] [START] 주기적 RSS/주식 데이터 갱신...")
             fetch_and_cache_market_data()
             keywords = extract_trending_keywords()
             t_news = get_top10_news()
@@ -725,9 +725,9 @@ def update_rss_cache_background():
                 if y_insights: rss_cache["youtube_insights"] = y_insights
                 if d_quotes:   rss_cache["dynamic_quotes"] = d_quotes
                 rss_cache["last_updated"] = time.time()
-            print("[Background Engine] ✅ 주기적 갱신 완료!")
+            print("[Background Engine] [DONE] 주기적 갱신 완료!")
         except Exception as e:
-            print(f"[Background Engine] ❌ 주기적 갱신 오류: {e}")
+            print(f"[Background Engine] [ERROR] 주기적 갱신 오류: {e}")
 
 
 @app.route("/")
