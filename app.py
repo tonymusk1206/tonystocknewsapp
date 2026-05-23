@@ -448,8 +448,24 @@ def get_dynamic_quotes():
 rss_cache = {
     "top10_news": [],
     "keyword_news": [],
-    "youtube_insights": [],
-    "dynamic_quotes": [],
+    "youtube_insights": [
+        {"title": "[슈카월드] 최신 업로드 영상", "channel": "슈카월드", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UCsJ6RuBiTVWRX156FVbeaGg"},
+        {"title": "[월가아재의과학적투자] 최신 업로드 영상", "channel": "월가아재의과학적투자", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UCJptR2r0YqXv1628J0pXpCw"},
+        {"title": "[박종훈지식한방] 최신 업로드 영상", "channel": "박종훈지식한방", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UC5cKPnu2NpaxKjU2UBuvVxA"},
+        {"title": "[소수몽키] 최신 업로드 영상", "channel": "소수몽키", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UC_t11S41W6N6hA4FqM3Bwbw"},
+        {"title": "[전인구경제연구소] 최신 업로드 영상", "channel": "전인구경제연구소", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UCznImSIaxZR7fdLCICLdgaQ"},
+        {"title": "[수페TV] 최신 업로드 영상", "channel": "수페TV", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UCiM27z7jO8O8xntKzF6Lh1A"},
+        {"title": "[이효석아카데미] 최신 업로드 영상", "channel": "이효석아카데미", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.youtube.com/channel/UCn6a15h1H1Z61K8Pj_66G-A"}
+    ],
+    "dynamic_quotes": [
+        {"text": '"시장이 탐욕스러울 때 두려워하고, 시장이 두려워할 때 탐욕스러워져야 합니다."', "author": "Warren Buffett", "role": "Berkshire Hathaway CEO", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%EC%9B%8C%EB%9F%B0+%EB%B2%84%ED%95%8F"},
+        {"text": '"최고의 투자는 위기 상황에서 인내심을 갖고 가치 있는 자산을 헐값에 매입하는 것입니다."', "author": "Bill Ackman", "role": "Pershing Square Capital CEO", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%EB%B9%8C+%EC%97%90%ED%81%AC%EB%A8%BC"},
+        {"text": '"가장 중요한 것은 무엇을 아느냐가 아니라 우리가 모른다는 사실을 아는 것입니다."', "author": "Howard Marks", "role": "Oaktree Capital Co-Chairman", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%ED%95%98%EC%9B%8C%EB%93%9C+%EB%A7%89%EC%8A%A4"},
+        {"text": '"성공적인 트레이딩의 핵심은 손실은 짧게 끊고 이익은 길게 가져가는 규율에 있습니다."', "author": "Mark Minervini", "role": "Author & Trader", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%EB%A7%88%ED%81%AC+%EB%AF%B8%EB%84%88%EB%B9%84%EB%8B%88"},
+        {"text": '"맞고 틀리는 것이 중요한 게 아니라, 맞았을 때 얼마나 많이 벌고 틀렸을 때 얼마나 적게 잃는지가 중요합니다."', "author": "Stanley Druckenmiller", "role": "Duquesne Family Office", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%EC%8A%A4%ED%83%A0%EB%A6%AC+%EB%93%9C%EB%9F%AC%EC%BC%84%EB%B0%80%EB%9F%AC"},
+        {"text": '"당신이 할 수 있는 가장 중요한 룰은 방어적인 플레이를 하는 것입니다. 결코 공격적인 플레이가 아닙니다."', "author": "Paul Tudor Jones", "role": "Tudor Investment Corp", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%ED%8F%B4+%ED%8A%9C%EB%8D%94+%EC%A1%B4%EC%8A%A4"},
+        {"text": '"연준의 통화정책은 시장의 기대에 끌려다니기보다 선제적으로 실물 경제의 펀더멘털을 반영해야 합니다."', "author": "Kevin Warsh", "role": "Former Federal Reserve Governor", "date": datetime.now().strftime("%Y.%m.%d"), "link": "https://www.google.com/search?q=%EC%BC%80%EB%B9%88+%EC%9B%8C%EC%8B%9C"}
+    ],
     "last_updated": time.time(),
     "lock": threading.Lock()
 }
@@ -573,107 +589,28 @@ def fetch_and_cache_market_data():
         print(f"[BG Market] [ERROR] 오류: {e}")
 
 # ── 번역 없는 빠른 뉴스 (초기 로딩용) ──
-def _get_news_fast():
-    """번역 없이 영어 제목 그대로 반환 - 빠른 초기 로딩용"""
-    feeds = [
-        "https://feeds.bloomberg.com/markets/news.rss",
-        "https://feeds.marketwatch.com/marketwatch/topstories/",
-        "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en&gl=US&ceid=US:en",
-    ]
-    collected, seen = [], set()
-    for feed_url in feeds:
-        try:
-            req = urllib.request.Request(feed_url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=6) as resp:
-                root = ET.fromstring(resp.read().strip())
-            for item in root.findall('.//item'):
-                raw = item.findtext('title', '').strip()
-                link = item.findtext('link', '').strip()
-                clean = re.sub(r'\s-\s[^-]+$', '', raw).strip()
-                if len(clean) < 10: continue
-                key = clean[:40].lower()
-                if key in seen: continue
-                seen.add(key)
-                collected.append({
-                    "title": clean, "summary": clean,
-                    "source": item.findtext('source', feed_url.split('/')[2]),
-                    "hashtags": generate_news_hashtags(clean),
-                    "date": datetime.now().strftime("%Y.%m.%d"),
-                    "time": "실시간", "link": link, "image": ""
-                })
-                if len(collected) >= 10: return collected
-        except: pass
-    return collected
-
 # ── 번역 없는 빠른 인사 발언 (초기 로딩용) ──
-def _get_quotes_fast():
-    """번역 없이 영어 기사 제목 그대로 - 빠른 초기 로딩용"""
-    leaders_simple = [
-        ("Jerome Powell", "Federal Reserve Chairman", "Jerome Powell Fed"),
-        ("Warren Buffett", "Berkshire Hathaway CEO", "Warren Buffett Berkshire"),
-        ("Elon Musk", "Tesla & SpaceX CEO", "Elon Musk Tesla"),
-        ("Jensen Huang", "NVIDIA CEO", "Jensen Huang NVIDIA"),
-        ("Jamie Dimon", "JPMorgan Chase CEO", "Jamie Dimon JPMorgan"),
-        ("Larry Fink", "BlackRock CEO", "Larry Fink BlackRock"),
-        ("Ray Dalio", "Bridgewater Founder", "Ray Dalio economy"),
-        ("Mark Zuckerberg", "Meta CEO", "Mark Zuckerberg Meta"),
-        ("Tim Cook", "Apple CEO", "Tim Cook Apple"),
-        ("Bill Gates", "Gates Foundation", "Bill Gates technology"),
-    ]
-    results = []
-    for author, role, query in leaders_simple:
-        enc = urllib.parse.quote(query)
-        url = f"https://news.google.com/rss/search?q={enc}+when:7d&hl=en-US&gl=US&ceid=US:en"
-        text = f'"{author}의 최신 시장 동향과 경제적 관점을 주목하십시오."'
-        link = f"https://www.google.com/search?q={urllib.parse.quote(author)}"
-        try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                root = ET.fromstring(resp.read().strip())
-            for item in root.findall('.//item'):
-                raw = item.findtext('title', '')
-                clean = re.sub(r'\s-\s[^-]+$', '', raw).strip()
-                if len(clean) > 15:
-                    text = f'"{clean}"'
-                    link = item.findtext('link', link)
-                    break
-        except: pass
-        results.append({"text": text, "author": author, "role": role,
-                        "date": datetime.now().strftime("%Y.%m.%d"), "link": link,
-                        "image": f"https://www.google.com/search?q={urllib.parse.quote(author)}"})
-    return results
-
 # ── 백그라운드 RSS + 주식 데이터 통합 갱신 스레드 ──
 def update_rss_cache_background():
     global rss_cache
-    time.sleep(2)  # 서버 부팅 완료 대기
+    time.sleep(1)  # 서버 부팅 완료 대기
     try:
-        # ① 주식 데이터를 가장 먼저 수집 (사용자가 주가를 먼저 보도록)
         print("[Background Engine] [START] 주식 데이터 최우선 수집 시작...")
         fetch_and_cache_market_data()
         print("[Background Engine] [DONE] 주식 데이터 완료!")
 
-        # ② 발언 및 영상 수집 (개별 갱신으로 사용자 대기 최소화)
-        print("[Background Engine] [START] 빠른 RSS 수집 (번역 전)...")
-            
-        d_quotes_fast = _get_quotes_fast()
-        if d_quotes_fast:
-            with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes_fast
-            
+        print("[Background Engine] [START] 유튜브 인사이트 수집...")
         y_insights = get_youtube_insights()
         if y_insights:
             with rss_cache["lock"]: rss_cache["youtube_insights"] = y_insights
-        print("[Background Engine] [DONE] 빠른 RSS 완료!")
-
-        # ③ 한글 번역 포함 정확한 버전으로 교체
-        print("[Background Engine] [START] 한글 번역 발언 수집...")
             
+        print("[Background Engine] [START] 인사 발언 수집...")
         d_quotes_ko = get_dynamic_quotes()
         if d_quotes_ko:
             with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes_ko
             
         with rss_cache["lock"]: rss_cache["last_updated"] = time.time()
-        print("[Background Engine] [DONE] 한글 번역 완료!")
+        print("[Background Engine] [DONE] 초기 갱신 완료!")
     except Exception as e:
         print(f"[Background Engine] [ERROR] 최초 갱신 오류: {e}")
 
@@ -695,8 +632,6 @@ def update_rss_cache_background():
             print("[Background Engine] [DONE] 주기적 갱신 완료!")
         except Exception as e:
             print(f"[Background Engine] [ERROR] 주기적 갱신 오류: {e}")
-
-
 @app.route("/")
 def home():
     return send_from_directory(".", "index.html")
