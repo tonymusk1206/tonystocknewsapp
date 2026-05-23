@@ -583,10 +583,6 @@ def update_rss_cache_background():
     global rss_cache
     time.sleep(1)  # 서버 부팅 완료 대기
     try:
-        print("[Background Engine] [START] 주식 데이터 최우선 수집 시작...")
-        fetch_and_cache_market_data()
-        print("[Background Engine] [DONE] 주식 데이터 완료!")
-
         print("[Background Engine] [START] 유튜브 인사이트 수집...")
         y_insights = get_youtube_insights()
         if y_insights:
@@ -596,6 +592,10 @@ def update_rss_cache_background():
         d_quotes_ko = get_dynamic_quotes()
         if d_quotes_ko:
             with rss_cache["lock"]: rss_cache["dynamic_quotes"] = d_quotes_ko
+            
+        print("[Background Engine] [START] 주식 데이터 최우선 수집 시작...")
+        fetch_and_cache_market_data()
+        print("[Background Engine] [DONE] 주식 데이터 완료!")
             
         with rss_cache["lock"]: rss_cache["last_updated"] = time.time()
         print("[Background Engine] [DONE] 초기 갱신 완료!")
