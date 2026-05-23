@@ -353,11 +353,11 @@ def get_youtube_insights():
     old_videos_map = {v['channel']: v for v in rss_cache.get("youtube_insights", [])}
     base_dt_now = datetime.now().strftime("%Y.%m.%d")
     fallback_data = {
-        "슈카월드": {"title": "[슈카월드] 끝없이 오르는 미국 증시와 AI 반도체 전쟁의 승자는?", "link": "https://www.youtube.com/watch?v=1", "image": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80"},
-        "삼프로TV": {"title": "[삼프로TV] 연준의 통화정책 전환점 진입, 월가 거물들의 포트폴리오 전략", "link": "https://www.youtube.com/watch?v=2", "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80"},
-        "소수몽키": {"title": "[소수몽키] 서학개미 필독! 이번 주 실적 발표 주요 테크주 체크리스트", "link": "https://www.youtube.com/watch?v=3", "image": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80"},
-        "월가아재": {"title": "[월가아재] 퀀트 분석으로 바라본 현재 시장의 버블 지수와 안전마진", "link": "https://www.youtube.com/watch?v=4", "image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"},
-        "수페TV": {"title": "[수페TV] 장기 투자자를 위한 배당성장주 탑픽 및 섹터별 자산 배분 가이드", "link": "https://www.youtube.com/watch?v=5", "image": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&q=80"}
+        "슈카월드": {"title": "[슈카월드] 최근 글로벌 증시 및 주요 경제 이슈 분석", "link": "https://www.youtube.com/channel/UCsJ6RuBiTVWRX156FVbeaGg"},
+        "삼프로TV": {"title": "[삼프로TV] 오늘장 핵심 이슈와 월가 거물들의 포트폴리오 전략", "link": "https://www.youtube.com/channel/UChbEQXDcwPEyP3rC18H_3oQ"},
+        "소수몽키": {"title": "[소수몽키] 서학개미 필독! 이번 주 실적 발표 및 주요 테크주 체크리스트", "link": "https://www.youtube.com/channel/UC_t11S41W6N6hA4FqM3Bwbw"},
+        "월가아재": {"title": "[월가아재] 퀀트 분석으로 바라본 현재 시장의 버블 지수와 안전마진", "link": "https://www.youtube.com/channel/UCJptR2r0YqXv1628J0pXpCw"},
+        "수페TV": {"title": "[수페TV] 장기 투자자를 위한 배당성장주 탑픽 및 섹터별 자산 배분 가이드", "link": "https://www.youtube.com/channel/UCiM27z7jO8O8xntKzF6Lh1A"}
     }
     for ch in channels:
         url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
@@ -387,41 +387,51 @@ def get_youtube_insights():
             if ch['name'] in old_videos_map:
                 videos.append(old_videos_map[ch['name']])
             else:
-                fb = fallback_data.get(ch['name'], {"title": f"[{ch['name']}] 주요 경제 분석 라이브", "link": "#", "image": ch['img']})
-                videos.append({"title": fb["title"], "channel": ch['name'], "summary": f"{ch['name']} 채널의 주요 분석 영상입니다.", "date": base_dt_now, "link": fb["link"], "image": fb["image"]})
+                fb = fallback_data.get(ch['name'], {"title": f"[{ch['name']}] 주요 경제 분석 영상", "link": f"https://www.youtube.com/channel/{ch['id']}"})
+                videos.append({"title": fb["title"], "channel": ch['name'], "summary": f"{ch['name']} 채널의 주요 분석 영상입니다.", "date": base_dt_now, "link": fb["link"], "image": ch['img']})
     return videos
 
 def get_dynamic_quotes():
     leaders = [
         {"author": "Jerome Powell", "role": "Federal Reserve Chairman",
          "query": "제롬 파월 연준", "en_query": "Jerome Powell Fed",
+         "fallback_quote": '"인플레이션이 목표치인 2%를 향해 지속적으로 둔화하고 있다는 확신이 들 때까지 제약적인 통화정책을 유지할 것입니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Jerome_H._Powell%2C_Federal_Reserve_portrait_%28cropped%29.jpg/120px-Jerome_H._Powell%2C_Federal_Reserve_portrait_%28cropped%29.jpg"},
         {"author": "Warren Buffett", "role": "Berkshire Hathaway CEO",
          "query": "워런 버핏 버크셔", "en_query": "Warren Buffett Berkshire",
+         "fallback_quote": '"시장이 탐욕스러울 때 두려워하고, 시장이 두려워할 때 탐욕스러워져야 합니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Warren_Buffett_KU_Visit.jpg/120px-Warren_Buffett_KU_Visit.jpg"},
         {"author": "Elon Musk", "role": "Tesla & SpaceX CEO",
          "query": "일론 머스크 테슬라", "en_query": "Elon Musk Tesla SpaceX",
+         "fallback_quote": '"자율주행과 AI는 테슬라의 미래이자, 세상을 바꿀 가장 중요한 기술적 진보입니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/120px-Elon_Musk_Royal_Society_%28crop2%29.jpg"},
         {"author": "Jensen Huang", "role": "NVIDIA CEO",
          "query": "젠슨 황 엔비디아", "en_query": "Jensen Huang NVIDIA",
+         "fallback_quote": '"생성형 AI는 새로운 산업 혁명의 시작이며, 모든 비즈니스는 AI 공장이 될 것입니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Jensen_Huang_CES_2018.jpg/120px-Jensen_Huang_CES_2018.jpg"},
         {"author": "Jamie Dimon", "role": "JPMorgan Chase CEO",
          "query": "제이미 다이먼 JP모건", "en_query": "Jamie Dimon JPMorgan economy",
+         "fallback_quote": '"지정학적 리스크와 인플레이션 고착화 가능성에 대비해 경제의 불확실성을 예의주시해야 합니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/JamieDimon.jpg/120px-JamieDimon.jpg"},
         {"author": "Larry Fink", "role": "BlackRock CEO",
          "query": "래리 핑크 블랙록", "en_query": "Larry Fink BlackRock markets",
+         "fallback_quote": '"장기적인 관점에서 자본 시장은 여전히 부를 창출하는 가장 강력한 엔진입니다."',
          "img": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&q=80"},
         {"author": "Ray Dalio", "role": "Bridgewater Associates Founder",
          "query": "레이 달리오 브리지워터", "en_query": "Ray Dalio economy markets",
+         "fallback_quote": '"변화하는 세계 질서 속에서 투자자들은 포트폴리오의 다각화와 현금의 가치 하락에 대비해야 합니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Ray_Dalio_Davos_2019_%28cropped%29.jpg/120px-Ray_Dalio_Davos_2019_%28cropped%29.jpg"},
         {"author": "Mark Zuckerberg", "role": "Meta CEO",
          "query": "마크 저커버그 메타", "en_query": "Mark Zuckerberg Meta AI",
+         "fallback_quote": '"오픈소스 AI와 메타버스는 우리가 사람들을 연결하고 미래의 디지털 환경을 구축하는 핵심입니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Mark_Zuckerberg_F8_2019_Keynote_%2832830578717%29_%28cropped%29.jpg/120px-Mark_Zuckerberg_F8_2019_Keynote_%2832830578717%29_%28cropped%29.jpg"},
         {"author": "Tim Cook", "role": "Apple CEO",
          "query": "팀 쿡 애플", "en_query": "Tim Cook Apple earnings",
+         "fallback_quote": '"우리는 AI가 우리의 일상적인 기기에서 사용자의 프라이버시를 보호하면서 삶을 어떻게 풍요롭게 할 수 있는지에 집중합니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Tim_Cook_2009_cropped.jpg/120px-Tim_Cook_2009_cropped.jpg"},
         {"author": "Bill Gates", "role": "Bill & Melinda Gates Foundation",
          "query": "빌 게이츠", "en_query": "Bill Gates technology economy",
+         "fallback_quote": '"AI 발전은 인터넷이나 스마트폰의 등장만큼이나 혁명적이며, 모든 지식 노동의 생산성을 근본적으로 바꿀 것입니다."',
          "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Bill_Gates_2017_%28cropped%29.jpg/120px-Bill_Gates_2017_%28cropped%29.jpg"},
     ]
     quotes_list = []
@@ -430,7 +440,7 @@ def get_dynamic_quotes():
         # 영어 구글 뉴스 우선 (1주일 이내)
         enc_q = urllib.parse.quote(ld['en_query'])
         url = f"https://news.google.com/rss/search?q={enc_q}+when:7d&hl=en-US&gl=US&ceid=US:en"
-        quote_text = f'"{ld["author"]}의 최신 시장 동향과 경제적 관점을 주목하십시오."'
+        quote_text = ld["fallback_quote"]
         link_href = f"https://www.google.com/search?q={urllib.parse.quote(ld['author'])}"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
