@@ -240,11 +240,14 @@ async function doSearch() {
 
 function renderSearchPriceCard(data) {
     const ch = data.changes;
-    const pct = (v) => {
-        const cls = v.pct > 0 ? '#22c55e' : v.pct < 0 ? '#f87171' : '#94a3b8';
-        const sign = v.pct > 0 ? '+' : '';
-        return `<span style="color:${cls};font-weight:700;">${sign}${v.pct}%</span>
-                <div style="font-size:0.82rem;color:#94a3b8;margin-top:2px;">${v.price}</div>`;
+    const pct = c => {
+        if (!c || c.pct === undefined) return '<div style="color:#94a3b8;">-</div>';
+        const v = c.pct;
+        const color = v > 0 ? '#22c55e' : (v < 0 ? '#f87171' : '#e2e8f0');
+        const sign = v > 0 ? '+' : '';
+        return `
+            <div style="color:${color};font-weight:700;font-size:1.1rem;margin-bottom:2px;">${sign}${v}%</div>
+        `;
     };
     const box = (label, sub, change) => `
         <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;min-width:110px;text-align:center;">
