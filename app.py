@@ -668,6 +668,8 @@ def search_stock():
         symbol    = equity['symbol']
         short_name = equity.get('shortname') or equity.get('longname', symbol)
         exchange  = equity.get('exchange', '')
+        sector_val = equity.get('sectorDisp') or equity.get('sector', 'N/A')
+        industry_val = equity.get('industryDisp') or equity.get('industry', 'N/A')
     except Exception as e:
         return jsonify({"error": f"종목 검색 실패: {e}"}), 500
 
@@ -750,10 +752,16 @@ def search_stock():
     # 기업 개요 가져오기
     company_profile = {}
     try:
-        info = ticker_obj.info
-        market_cap = info.get("marketCap", 0)
-        # 시총 포맷팅 (조/억 단위 또는 Trillion/Billion)
-        if is_kr:
+        # yfinance info 가 렌더에서 차단되므로 fast_info 사용
+        try:
+            market_cap = ticker_obj.fast_info['market_cap']
+        except:
+            market_cap = 0
+            
+        # 시총 포맷팅
+        if market_cap == 0:
+            mc_str = "N/A"
+        elif is_kr:
             if market_cap >= 1_000_000_000_000:
                 mc_str = f"{market_cap / 1_000_000_000_000:.1f}조 원"
             else:
@@ -764,19 +772,27 @@ def search_stock():
             else:
                 mc_str = f"${market_cap / 1_000_000_000:.2f}B"
                 
-        sector = info.get("sector", "N/A")
-        industry = info.get("industry", "N/A")
-        summary = info.get("longBusinessSummary", "")
-        
+        # summary fetching via Wikipedia API
+        summary = ""
+        try:
+            # removing 'Inc.', 'Corp.', 'Co., Ltd.' for better wiki match
+            clean_name = short_name.split(',')[0].replace(' Inc.', '').replace(' Corp.', '').replace(' Co.', '').replace(' Ltd.', '')
+            wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(clean_name)}"
+            req = urllib.request.Request(wiki_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                summary = json.loads(resp.read().decode('utf-8')).get('extract', '')
+        except:
+            pass
+            
         # 번역
         translator = GoogleTranslator(source='auto', target='ko')
         try:
-            sector_ko = translator.translate(sector) if sector != "N/A" else "N/A"
-            industry_ko = translator.translate(industry) if industry != "N/A" else "N/A"
+            sector_ko = translator.translate(sector_val) if sector_val != "N/A" else "N/A"
+            industry_ko = translator.translate(industry_val) if industry_val != "N/A" else "N/A"
             summary_ko = translator.translate(summary[:1500]) if summary else "기업 설명이 제공되지 않습니다."
         except:
-            sector_ko = sector
-            industry_ko = industry
+            sector_ko = sector_val
+            industry_ko = industry_val
             summary_ko = summary
 
         company_profile = {
