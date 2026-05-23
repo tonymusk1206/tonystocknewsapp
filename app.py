@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 import yfinance as yf
 import pandas as pd
@@ -10,6 +10,8 @@ import urllib.parse
 import xml.etree.ElementTree as ET
 import re
 from collections import Counter
+import json
+from deep_translator import GoogleTranslator
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 CORS(app)
@@ -514,6 +516,120 @@ def market_data():
     fallback["quotes"] = rss_cache["dynamic_quotes"]
     fallback["youtube"] = rss_cache["youtube_insights"]
     return jsonify(fallback)
+
+# ── /api/search 엔드포인트 ──
+@app.route('/api/search')
+def search_stock():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({"error": "검색어를 입력해주세요."}), 400
+
+    # 1. 야후 파이낸스로 티커 자동 변환
+    try:
+        search_url = f"https://query2.finance.yahoo.com/v1/finance/search?q={urllib.parse.quote(query)}&quotesCount=5"
+        req = urllib.request.Request(search_url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode())
+        quotes_list = data.get('quotes', [])
+        if not quotes_list:
+            return jsonify({"error": "검색 결과가 없습니다."}), 404
+        equity = next((q for q in quotes_list if q.get('quoteType') in ['EQUITY', 'ETF']), quotes_list[0])
+        symbol    = equity['symbol']
+        short_name = equity.get('shortname') or equity.get('longname', symbol)
+        exchange  = equity.get('exchange', '')
+    except Exception as e:
+        return jsonify({"error": f"종목 검색 실패: {e}"}), 500
+
+    # 2. yfinance로 과거 주가 등락률 계산
+    try:
+        ticker = yf.Ticker(symbol)
+        hist   = ticker.history(period="2y")
+        if hist.empty:
+            return jsonify({"error": "주가 데이터를 찾을 수 없습니다."}), 404
+        current_price = float(hist['Close'].iloc[-1])
+
+        def get_past_price(days_ago):
+            target_str = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
+            past = hist.loc[:target_str]
+            return float(past['Close'].iloc[-1]) if not past.empty else None
+
+        def safe_pct(past_price):
+            if past_price is None or past_price == 0:
+                return {"pct": 0.0, "price": "N/A"}
+            return {"pct": round(((current_price - past_price) / past_price) * 100, 1),
+                    "price": f"{past_price:,.2f}"}
+
+        changes = {
+            "today": safe_pct(get_past_price(1)),
+            "d1":    safe_pct(get_past_price(1)),
+            "d3":    safe_pct(get_past_price(3)),
+            "w1":    safe_pct(get_past_price(7)),
+            "m1":    safe_pct(get_past_price(30)),
+            "m3":    safe_pct(get_past_price(90)),
+            "m6":    safe_pct(get_past_price(180)),
+            "y1":    safe_pct(get_past_price(365)),
+        }
+    except Exception as e:
+        return jsonify({"error": f"주가 데이터 수집 실패: {e}"}), 500
+
+    # 3. 구글 뉴스 크롤링 + 한글 번역
+    news_items = []
+    try:
+        news_q   = urllib.parse.quote(f"{short_name} OR {symbol} stock")
+        news_url = f"https://news.google.com/rss/search?q={news_q}&hl=en-US&gl=US&ceid=US:en"
+        req = urllib.request.Request(news_url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            root = ET.fromstring(resp.read().strip())
+        translator = GoogleTranslator(source='auto', target='ko')
+        for item in root.findall('.//item')[:7]:
+            raw_title = item.findtext('title', '')
+            # 언론사 이름 제거 (" - 언론사" 패턴)
+            clean_title = re.sub(r'\s-\s[^-]+$', '', raw_title).strip()
+            link     = item.findtext('link', '')
+            pub_date = item.findtext('pubDate', '')
+            source   = item.findtext('source', 'Google News')
+            try:
+                dt = datetime.strptime(pub_date[:25], "%a, %d %b %Y %H:%M:%S")
+                date_str = dt.strftime("%Y-%m-%d %H:%M")
+            except Exception:
+                date_str = pub_date[:16]
+            try:
+                translated = translator.translate(clean_title[:500])
+            except Exception:
+                translated = clean_title
+            news_items.append({
+                "title":          translated,
+                "original_title": clean_title,
+                "link":           link,
+                "date":           date_str,
+                "source":         source,
+            })
+    except Exception as e:
+        print(f"[Search] News fetch failed: {e}")
+
+    # 4. 네이버 링크 생성
+    is_kr       = symbol.endswith('.KS') or symbol.endswith('.KQ')
+    base_symbol = symbol.split('.')[0]
+    if is_kr:
+        naver_board_url = f"https://finance.naver.com/item/board.naver?code={base_symbol}"
+    else:
+        naver_board_url = f"https://finance.naver.com/world/sise.naver?symbol={base_symbol}"
+    naver_cafe_url = (f"https://search.naver.com/search.naver?where=article"
+                      f"&query={urllib.parse.quote(short_name + ' ' + base_symbol)}"
+                      f"&ds=&de=&nso=so%3Add%2Cp%3Aall&ie=utf8")
+
+    return jsonify({
+        "symbol":   symbol,
+        "name":     short_name,
+        "exchange": exchange,
+        "price":    f"{current_price:,.2f}",
+        "changes":  changes,
+        "news":     news_items,
+        "links": {
+            "naver_board": naver_board_url,
+            "naver_cafe":  naver_cafe_url,
+        },
+    })
 
 # 서버 메인 루프 실행 전 비동기 스레드 스타트
 threading.Thread(target=update_rss_cache_background, daemon=True).start()

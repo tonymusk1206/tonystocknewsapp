@@ -47,6 +47,10 @@
                     <span class="tab-icon">💡</span>
                     <span>Insight</span>
                 </button>
+                <button class="tab-btn" data-tab="tab-search">
+                    <span class="tab-icon">🔍</span>
+                    <span>Search</span>
+                </button>
             </div>
         </nav>
         
@@ -153,6 +157,77 @@
                 <div id="youtube-container" class="news-list">
                     <!-- JS Injected -->
                 </div>
+            </section>
+
+            <!-- 7. Search 탭 -->
+            <section class="dashboard-section" id="search-section" style="display:none;">
+                <div class="section-header">
+                    <h2>🔍 종목 검색</h2>
+                    <p>기업명 또는 티커를 입력하면 시점별 주가 · 차트 · 뉴스 · 토론방을 한눈에</p>
+                </div>
+
+                <!-- 검색창 -->
+                <div style="display:flex;gap:12px;margin-bottom:2rem;">
+                    <input id="search-input" type="text" placeholder="예: Apple, AAPL, 삼성전자, 005930"
+                        style="flex:1;padding:14px 18px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.15);
+                               background:rgba(255,255,255,0.06);color:#fff;font-size:1rem;
+                               outline:none;transition:border 0.2s;"
+                        onkeydown="if(event.key==='Enter') doSearch()" />
+                    <button onclick="doSearch()" id="search-btn"
+                        style="padding:14px 28px;border-radius:12px;border:none;
+                               background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                               color:#fff;font-size:1rem;font-weight:600;cursor:pointer;
+                               transition:opacity 0.2s;">
+                        검색
+                    </button>
+                </div>
+
+                <!-- 로딩 / 에러 -->
+                <div id="search-loading" style="display:none;text-align:center;padding:3rem;color:var(--text-secondary);">⏳ 데이터 수집 중...</div>
+                <div id="search-error"   style="display:none;color:#f87171;padding:1rem;border-radius:8px;background:rgba(248,113,113,0.1);"></div>
+
+                <!-- 결과 영역 -->
+                <div id="search-result" style="display:none;">
+
+                    <!-- 시점별 주가 카드 -->
+                    <div id="search-price-card" style="margin-bottom:2rem;"></div>
+
+                    <!-- TradingView 차트 -->
+                    <div class="glass-card" style="margin-bottom:2rem;padding:1.5rem;">
+                        <h3 style="margin-bottom:1rem;color:var(--accent-brand);">📈 인터랙티브 차트 (TradingView)</h3>
+                        <div id="tradingview-container"
+                             style="border-radius:10px;overflow:hidden;min-height:500px;">
+                        </div>
+                    </div>
+
+                    <!-- 최신 글로벌 뉴스 -->
+                    <div class="glass-card" style="margin-bottom:2rem;padding:1.5rem;">
+                        <h3 style="margin-bottom:1rem;color:var(--accent-brand);">🌐 글로벌 최신 뉴스 (한글 번역)</h3>
+                        <div id="search-news-list" style="display:flex;flex-direction:column;gap:1rem;"></div>
+                    </div>
+
+                    <!-- 네이버 토론방 / 카페 링크 -->
+                    <div class="glass-card" style="margin-bottom:2rem;padding:1.5rem;">
+                        <h3 style="margin-bottom:1rem;color:var(--accent-brand);">💬 종목 토론방 · 카페</h3>
+                        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                            <a id="link-naver-board" href="#" target="_blank"
+                               style="display:inline-flex;align-items:center;gap:8px;padding:12px 20px;
+                                      background:linear-gradient(135deg,#03c75a,#00a04b);
+                                      border-radius:10px;color:#fff;font-weight:600;text-decoration:none;
+                                      transition:opacity 0.2s;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
+                                <span>🟢</span> 네이버 증권 토론방
+                            </a>
+                            <a id="link-naver-cafe" href="#" target="_blank"
+                               style="display:inline-flex;align-items:center;gap:8px;padding:12px 20px;
+                                      background:linear-gradient(135deg,#03c75a,#00a04b);
+                                      border-radius:10px;color:#fff;font-weight:600;text-decoration:none;
+                                      transition:opacity 0.2s;" onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
+                                <span>☕</span> 네이버 카페 검색
+                            </a>
+                        </div>
+                    </div>
+
+                </div><!-- /search-result -->
             </section>
         </main>
         
