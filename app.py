@@ -355,20 +355,17 @@ def get_youtube_insights():
     ]
     
     def fetch_channel(ch):
-        url = f"https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
+        url = f"https://api.rss2json.com/v1/api.json?rss_url=https://www.youtube.com/feeds/videos.xml?channel_id={ch['id']}"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req, timeout=10) as resp:
-                xml_data = resp.read()
-                root = ET.fromstring(xml_data)
-                ns = {'yt': 'http://www.youtube.com/xml/schemas/2015', 'atom': 'http://www.w3.org/2005/Atom'}
-                entry = root.find('atom:entry', ns)
-                if entry is not None:
-                    title = entry.find('atom:title', ns).text
-                    link = entry.find('atom:link', ns).attrib['href']
-                    published = entry.find('atom:published', ns).text
-                    pub_date = published.split('T')[0].replace('-', '.')
-                    return {"title": title, "channel": ch["name"], "date": pub_date, "link": link}
+                data = json.loads(resp.read().decode())
+                item = data['items'][0]
+                title = item['title']
+                link = item['link']
+                # pubDate format: 2026-05-22 13:42:48
+                pub_date = item['pubDate'].split(' ')[0].replace('-', '.')
+                return {"title": title, "channel": ch["name"], "date": pub_date, "link": link}
         except Exception as e:
             print(f"[YouTube] Error fetching {ch['name']}: {e}")
         

@@ -327,3 +327,98 @@ function renderSearchNews(news) {
             <div style="font-size:0.82rem;color:#94a3b8;">${n.original_title}</div>
         </a>`).join('');
 }
+
+function renderEPSSection(data) {
+    if(!data.eps || data.eps.length === 0) return;
+
+    let tableRows = '';
+    data.eps.forEach(e => {
+        const surColor = e.surprise > 0 ? '#22c55e' : e.surprise < 0 ? '#f87171' : '#94a3b8';
+        tableRows += `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:10px;text-align:left;">${e.date}</td>
+                <td style="padding:10px;text-align:right;">${e.estimate.toFixed(2)}</td>
+                <td style="padding:10px;text-align:right;font-weight:bold;">${e.reported.toFixed(2)}</td>
+                <td style="padding:10px;text-align:right;color:${surColor};">${e.surprise > 0 ? '+' : ''}${e.surprise.toFixed(1)}%</td>
+            </tr>
+        `;
+    });
+
+    const epsHtml = `
+        <div class="glass-card" style="margin-top:20px;padding:20px;">
+            <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:15px;color:#a78bfa;">최근 5년 분기별 EPS (주당순이익)</h3>
+            
+            <div style="width:100%; height:300px; margin-bottom:20px;">
+                <canvas id="epsChartCanvas"></canvas>
+            </div>
+            
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.1);color:#a78bfa;">
+                            <th style="padding:10px;text-align:left;">발표일</th>
+                            <th style="padding:10px;text-align:right;">예측치(Est)</th>
+                            <th style="padding:10px;text-align:right;">발표치(Act)</th>
+                            <th style="padding:10px;text-align:right;">어닝 서프라이즈</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    // Append to search-content
+    const el = document.getElementById('search-content');
+    const div = document.createElement('div');
+    div.innerHTML = epsHtml;
+    el.appendChild(div);
+
+    // Draw Chart
+    const ctx = document.getElementById('epsChartCanvas').getContext('2d');
+    const labels = data.eps.map(e => e.date);
+    const estData = data.eps.map(e => e.estimate);
+    const actData = data.eps.map(e => e.reported);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '예측치',
+                    data: estData,
+                    backgroundColor: 'rgba(148, 163, 184, 0.5)',
+                    borderColor: 'rgba(148, 163, 184, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: '발표치',
+                    data: actData,
+                    backgroundColor: 'rgba(167, 139, 250, 0.8)',
+                    borderColor: 'rgba(167, 139, 250, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#e2e8f0' } }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 }
+                }
+            }
+        }
+    });
+}
