@@ -16,8 +16,13 @@ jobs:
     steps:
       - name: 🏓 /ping 요청
         run: |
+          # curl 실패(타임아웃·연결 거부)시 "000" 반환 → 워크플로우 오류 없이 진행
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 25 \
-            "https://tony-stock-news.onrender.com/ping")
+            --max-time 30 \
+            "https://tony-stock-news.onrender.com/ping" || echo "000")
           echo "응답 코드: $STATUS"
-          [ "$STATUS" = "200" ] && echo "✅ 서버 정상" || echo "⚠️ 응답 없음 (슬립 해제 중일 수 있음)"
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ 서버 정상"
+          else
+            echo "⚠️ 응답 없음 (코드: $STATUS) - Render 슬립 해제 중일 수 있음 (정상)"
+          fi
