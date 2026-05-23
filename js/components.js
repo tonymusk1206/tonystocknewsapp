@@ -349,7 +349,8 @@ function initTabs() {
         'tab-market': ['market-overview-section', 'sector-performance-section'],
         'tab-companies': ['company-performance-section'],
         'tab-news': ['news-section'],
-        'tab-insights': ['quotes-section', 'youtube-section']
+        'tab-insights': ['quotes-section', 'youtube-section'],
+        'tab-search': ['search-section']
     };
 
     function switchTab(targetTabId) {

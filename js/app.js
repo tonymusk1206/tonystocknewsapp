@@ -68,42 +68,6 @@ function updateTime() {
     }, 1000);
 }
 
-// ── 탭 전환 ──
-(function initTabs() {
-    const TAB_MAP = {
-        'tab-market':    ['market-overview-section', 'sector-performance-section'],
-        'tab-companies': ['company-performance-section'],
-        'tab-news':      ['news-section'],
-        'tab-insights':  ['quotes-section', 'youtube-section'],
-        'tab-search':    ['search-section'],
-    };
-    const ALL_SECTIONS = [
-        'market-overview-section','sector-performance-section',
-        'company-performance-section','news-section',
-        'quotes-section','youtube-section','search-section'
-    ];
-
-    function switchTab(tabId) {
-        // 탭 버튼 강조
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tabId);
-        });
-        // 섹션 표시/숨김
-        ALL_SECTIONS.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-        const visible = TAB_MAP[tabId] || [];
-        visible.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'block';
-        });
-    }
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-    });
-})();
 
 // ── Search 기능 ──
 const SEARCH_API = window.location.origin.includes('http')
