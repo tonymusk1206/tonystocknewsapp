@@ -255,20 +255,24 @@ function renderSearchPriceCard(data) {
             ${pct(change)}
         </div>`;
 
+    const d = data.dates || {};
     document.getElementById('search-price-card').innerHTML = `
         <div class="glass-card" style="padding:1.5rem;">
             <div style="font-size:1.2rem;font-weight:700;margin-bottom:4px;">${data.name}
                 <span style="font-size:0.9rem;color:#94a3b8;font-weight:400;"> (${data.symbol} · ${data.exchange})</span>
             </div>
-            <div style="font-size:2.2rem;font-weight:800;margin-bottom:1rem;">${data.price}</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:1rem;">
+                <span style="font-size:2.2rem;font-weight:800;">${data.price}</span>
+                <span style="font-size:0.82rem;color:#94a3b8;">현재가 (${d.current || '오늘'})</span>
+            </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                ${box('1일전比','(1일전)', ch.d1)}
-                ${box('3일전比','(3일전)', ch.d3)}
-                ${box('1주전比','(1주전)', ch.w1)}
-                ${box('1달전比','(1달전)', ch.m1)}
-                ${box('3달전比','(3달전)', ch.m3)}
-                ${box('6달전比','(6달전)', ch.m6)}
-                ${box('1년전比','(1년전)', ch.y1)}
+                ${box('1일전比', d.d1 || '1D', ch.d1)}
+                ${box('3일전比', d.d3 || '3D', ch.d3)}
+                ${box('1주전比', d.w1 || '1W', ch.w1)}
+                ${box('1달전比', d.m1 || '1M', ch.m1)}
+                ${box('3달전比', d.m3 || '3M', ch.m3)}
+                ${box('6달전比', d.m6 || '6M', ch.m6)}
+                ${box('1년전比', d.y1 || '1Y', ch.y1)}
             </div>
         </div>`;
 }

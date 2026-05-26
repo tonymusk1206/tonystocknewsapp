@@ -759,6 +759,16 @@ def search_stock():
             "m6":    safe_pct(get_past_data(180)),
             "y1":    safe_pct(get_past_data(365)),
         }
+        search_dates = {
+            "current": hist.index[-1].strftime('%y.%m.%d') if not hist.empty else "",
+            "d1": changes["d1"]["date"],
+            "d3": changes["d3"]["date"],
+            "w1": changes["w1"]["date"],
+            "m1": changes["m1"]["date"],
+            "m3": changes["m3"]["date"],
+            "m6": changes["m6"]["date"],
+            "y1": changes["y1"]["date"],
+        }
     except Exception as e:
         return jsonify({"error": f"주가 데이터 수집 실패: {e}"}), 500
 
@@ -936,6 +946,7 @@ def search_stock():
         "exchange": exchange,
         "price":    f"{current_price:,.2f}",
         "changes":  changes,
+        "dates":    search_dates,
         "news":     news_items,
         "profile":  company_profile,
         "links": {

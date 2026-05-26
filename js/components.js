@@ -40,7 +40,7 @@ function createMarketCard(market) {
             </div>
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    <span class="metric-label">현재가</span>
+                    <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${mockData.dates.current})</span></span>
                     <div class="metric-content">
                         <span class="metric-value highlight">${market.value}</span>
                         <span class="metric-pct ${getPercentClass(market.changes.today)}">
@@ -128,15 +128,15 @@ function createSectorTableHTML(sectors) {
     return `
         <thead>
             <tr>
-                <th>자산 (ETF)</th>
-                <th>현재가</th>
-                <th>1일전比</th>
-                <th>3일전比</th>
-                <th>1주전比</th>
-                <th>1달전比</th>
-                <th>3달전比</th>
-                <th>6달전比</th>
-                <th>1년전比</th>
+                <th style="text-align:left;">자산 (ETF)</th>
+                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
+                <th>1일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d1})</span></th>
+                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
+                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
+                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
+                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
+                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
+                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
             </tr>
         </thead>
         <tbody>
@@ -175,7 +175,7 @@ function createCompanyCard(company) {
             
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    <span class="metric-label">현재가</span>
+                    <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${mockData.dates.current})</span></span>
                     <div class="metric-content">
                         <span class="metric-value highlight">${company.value}</span>
                         <span class="metric-pct ${getPercentClass(company.changes.today)}">
