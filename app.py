@@ -534,39 +534,45 @@ def fetch_and_cache_market_data():
         all_tickers.extend([item[1] for item in c_list])
     unique_tickers = list(set(all_tickers))
     try:
+        # ── 최적화 ①: 모든 티커를 1회 요청 (배치 분할 제거), 1년치로 단축 ──
+        t0 = time.time()
         data = pd.DataFrame()
-        for i in range(0, len(unique_tickers), 15):
-            batch = unique_tickers[i:i+15]
-            try:
-                batch_data = yf.download(batch, period="14mo", group_by="ticker", threads=True, progress=False, timeout=20)
-                if not batch_data.empty:
-                    if data.empty: data = batch_data
-                    else:
-                        new_cols = batch_data.columns.levels[0].difference(data.columns.levels[0])
-                        if not new_cols.empty: data = pd.concat([data, batch_data[new_cols]], axis=1)
-            except Exception as e:
-                print(f"[BG Market] 배치 실패 {batch}: {e}")
+        try:
+            data = yf.download(
+                unique_tickers, period="1y",
+                group_by="ticker", threads=True,
+                progress=False, timeout=30, auto_adjust=True
+            )
+        except Exception as e:
+            print(f"[BG Market] 단일 배치 실패, 2배치로 재시도: {e}")
+            half = len(unique_tickers) // 2
+            for batch in [unique_tickers[:half], unique_tickers[half:]]:
+                try:
+                    bd = yf.download(batch, period="1y", group_by="ticker", threads=True, progress=False, timeout=25, auto_adjust=True)
+                    if not bd.empty:
+                        data = bd if data.empty else pd.concat([data, bd], axis=1)
+                except Exception as e2:
+                    print(f"[BG Market] 배치 재시도 실패: {e2}")
+        print(f"[BG Market] 히스토리 다운로드 완료: {time.time()-t0:.2f}s")
+
         if data.empty:
             print("[BG Market] 모든 티커 다운로드 실패, 스킵")
             return
+
+        # ── 최적화 ②: 1분봉 realtime 제거 → 병렬 fast_info로 현재가 조회 ──
         realtime_prices = {}
-        try:
-            for i in range(0, len(unique_tickers), 20):
-                rt_batch = unique_tickers[i:i+20]
-                try:
-                    rt_data = yf.download(rt_batch, period="1d", interval="1m", group_by="ticker", threads=True, progress=False, timeout=15)
-                    if not rt_data.empty:
-                        for t_sym in rt_batch:
-                            try:
-                                if len(rt_batch) == 1: rt_hist = rt_data.dropna(subset=['Close'])
-                                else:
-                                    if t_sym not in rt_data.columns.get_level_values(0): continue
-                                    rt_hist = rt_data[t_sym].dropna(subset=['Close'])
-                                if not rt_hist.empty: realtime_prices[t_sym] = float(rt_hist['Close'].iloc[-1])
-                            except: pass
-                except: pass
-        except Exception as e:
-            print(f"[BG Market] 실시간 가격 실패: {e}")
+        def fetch_fast_price(sym):
+            try:
+                fi = yf.Ticker(sym).fast_info
+                price = fi.get('lastPrice') or fi.get('regularMarketPrice')
+                return sym, float(price) if price else None
+            except:
+                return sym, None
+        t1 = time.time()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex:
+            for sym, price in ex.map(fetch_fast_price, unique_tickers):
+                if price: realtime_prices[sym] = price
+        print(f"[BG Market] 실시간 가격(fast_info) 완료: {time.time()-t1:.2f}s")
         spx_hist = data["^GSPC"].dropna(subset=['Close']) if "^GSPC" in data.columns.levels[0] else None
         def standard_date(days_ago):
             if spx_hist is None or spx_hist.empty: return ""
