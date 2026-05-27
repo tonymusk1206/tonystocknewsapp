@@ -238,6 +238,7 @@ function initTabs() {
     const tabSectionMap = {
         'tab-market': ['market-overview-section', 'sector-performance-section'],
         'tab-companies': ['company-performance-section'],
+        'tab-board': ['board-section']
     };
 
     function switchTab(targetTabId) {
@@ -249,6 +250,10 @@ function initTabs() {
         allSections.forEach(section => {
             section.classList.toggle('hidden-tab', !activeSectionIds.includes(section.id));
         });
+
+        if (targetTabId === 'tab-board' && typeof fetchBoardPosts === 'function') {
+            fetchBoardPosts();
+        }
     }
 
     tabBtns.forEach(btn => {
@@ -258,6 +263,42 @@ function initTabs() {
     });
 
     switchTab('tab-market');
+}
+
+// ── 게시글 피드 렌더링 ──
+function renderBoard(posts) {
+    const container = document.getElementById('board-posts-container');
+    if (!container) return;
+    
+    if (!posts || posts.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-secondary);">아직 등록된 의견이 없습니다. 첫 의견을 작성해 보세요!</div>';
+        return;
+    }
+    
+    const html = posts.map(post => `
+        <div class="board-post-card glass-card" style="margin-bottom: 1rem; padding: 1.2rem; border: 1px solid rgba(255,255,255,0.05); border-radius:12px; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:600; color:var(--accent-brand); font-size:0.95rem;">${escapeHtml(post.nickname)}</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">${post.created_at}</span>
+                </div>
+                <button onclick="openDeleteModal(${post.id})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; transition:color 0.2s;" onmouseover="this.style.color='var(--accent-down)'" onmouseout="this.style.color=''">삭제</button>
+            </div>
+            <h4 style="font-size:1.05rem; margin-bottom:6px; font-weight:600; color:#fff;">${escapeHtml(post.title)}</h4>
+            <p style="font-size:0.9rem; color:var(--text-secondary); line-height:1.5; white-space:pre-wrap; word-break:break-all;">${escapeHtml(post.content)}</p>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
 }
 
 if (document.readyState === 'loading') {

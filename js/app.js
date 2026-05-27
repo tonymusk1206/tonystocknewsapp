@@ -52,3 +52,105 @@ async function fetchMarketData() {
 function searchStock(symbol) {
     window.open(`https://finance.yahoo.com/quote/${symbol}`, '_blank');
 }
+
+// ── 게시판 API 연동 함수들 ──
+async function fetchBoardPosts() {
+    const container = document.getElementById('board-posts-container');
+    if (!container) return;
+    
+    try {
+        container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">의견을 불러오는 중...</div>';
+        const res = await fetch(`${window.location.origin}/api/board`);
+        if (!res.ok) throw new Error('API 응답 실패');
+        const posts = await res.json();
+        renderBoard(posts);
+    } catch (err) {
+        console.error("Board Fetch Error:", err);
+        container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--accent-down);">불러오기 실패 (연결 오류)</div>';
+    }
+}
+
+async function handleBoardSubmit(e) {
+    e.preventDefault();
+    const nickEl = document.getElementById('board-nickname');
+    const pwEl = document.getElementById('board-password');
+    const titleEl = document.getElementById('board-post-title');
+    const contentEl = document.getElementById('board-post-content');
+    
+    if (!nickEl || !pwEl || !titleEl || !contentEl) return;
+    
+    const body = {
+        nickname: nickEl.value,
+        password: pwEl.value,
+        title: titleEl.value,
+        content: contentEl.value
+    };
+    
+    try {
+        const res = await fetch(`${window.location.origin}/api/board`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+            titleEl.value = '';
+            contentEl.value = '';
+            fetchBoardPosts();
+        } else {
+            alert(resData.error || '글 작성에 실패했습니다.');
+        }
+    } catch (err) {
+        console.error("Board Submit Error:", err);
+        alert('서버 연결 실패');
+    }
+}
+
+function openDeleteModal(postId) {
+    const modal = document.getElementById('delete-post-modal');
+    const idEl = document.getElementById('delete-post-id');
+    const pwEl = document.getElementById('delete-post-password');
+    
+    if (!modal || !idEl || !pwEl) return;
+    idEl.value = postId;
+    pwEl.value = '';
+    modal.style.display = 'flex';
+}
+
+async function confirmDeletePost() {
+    const idEl = document.getElementById('delete-post-id');
+    const pwEl = document.getElementById('delete-post-password');
+    const modal = document.getElementById('delete-post-modal');
+    
+    if (!idEl || !pwEl || !modal) return;
+    
+    const body = {
+        id: idEl.value,
+        password: pwEl.value
+    };
+    
+    try {
+        const res = await fetch(`${window.location.origin}/api/board/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+            modal.style.display = 'none';
+            fetchBoardPosts();
+        } else {
+            alert(resData.error || '삭제 실패');
+        }
+    } catch (err) {
+        console.error("Board Delete Error:", err);
+        alert('서버 연결 실패');
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById('board-write-form');
+    if (form) {
+        form.addEventListener('submit', handleBoardSubmit);
+    }
+});

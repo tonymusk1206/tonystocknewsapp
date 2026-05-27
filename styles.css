@@ -596,3 +596,103 @@ h3 {
     transform: translateY(10px);
 }
 
+/* ── 게시판 전용 스타일 ── */
+.board-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.5rem;
+}
+
+.board-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.board-form input, .board-form textarea {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    transition: var(--transition-fast);
+}
+
+.board-form input:focus, .board-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-brand);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.board-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.btn-submit {
+    align-self: flex-end;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--accent-brand), #6366f1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: 0 4px 12px var(--accent-brand-glow);
+}
+
+.btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+}
+
+.board-divider {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+    margin: 1.5rem 0;
+}
+
+.board-list-area h3 {
+    margin-bottom: 1.5rem;
+}
+
+.board-post-card {
+    transition: var(--transition-base) !important;
+}
+
+.board-post-card:hover {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+    .board-container {
+        padding: 1.2rem;
+    }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    .btn-submit {
+        width: 100%;
+        align-self: stretch;
+    }
+}
+

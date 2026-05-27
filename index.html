@@ -40,6 +40,10 @@
                     <span class="tab-icon">🏢</span>
                     <span>주요Sector</span>
                 </button>
+                <button class="tab-btn" data-tab="tab-board">
+                    <span class="tab-icon">💬</span>
+                    <span>토론방</span>
+                </button>
             </div>
         </nav>
         
@@ -98,6 +102,35 @@
                 </div>
             </section>
 
+            <!-- 4. 토론 게시판 -->
+            <section class="dashboard-section hidden-tab" id="board-section">
+                <div class="section-header">
+                    <h2>💬 토론 게시판</h2>
+                    <p>글로벌 증시와 섹터 분석에 대한 자유로운 의견을 공유하는 공간입니다.</p>
+                </div>
+                <div class="board-container glass-card">
+                    <div class="board-write-area">
+                        <h3>✏️ 의견 쓰기</h3>
+                        <form id="board-write-form" class="board-form">
+                            <div class="form-row">
+                                <input type="text" id="board-nickname" placeholder="닉네임 (최대 15자)" required maxlength="15">
+                                <input type="password" id="board-password" placeholder="삭제 비밀번호 (4자리)" required maxlength="20">
+                            </div>
+                            <input type="text" id="board-post-title" placeholder="글 제목 (최대 50자)" required maxlength="50">
+                            <textarea id="board-post-content" placeholder="건전한 토론 문화를 위해 욕설이나 비방은 자제해 주세요. (최대 1000자)" required maxlength="1000"></textarea>
+                            <button type="submit" class="btn-submit">등록하기</button>
+                        </form>
+                    </div>
+                    <hr class="board-divider">
+                    <div class="board-list-area">
+                        <h3>💬 최근 토론 피드</h3>
+                        <div id="board-posts-container">
+                            <!-- JS Injected (Posts Feed) -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
         
         <footer class="app-footer">
@@ -115,6 +148,21 @@
             <button onclick="document.getElementById('related-stocks-modal').style.display='none'" style="position:absolute; top:15px; right:20px; background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
             <h3 style="margin-bottom:1rem; color:var(--accent-brand);">동일 산업군 기업 리스트</h3>
             <div id="related-stocks-list" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex-grow:1;">
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 비밀번호 확인 모달 -->
+    <div id="delete-post-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:9999; justify-content:center; align-items:center;">
+        <div class="glass-card" style="padding:2rem; max-width:400px; width:90%; position:relative;">
+            <button onclick="document.getElementById('delete-post-modal').style.display='none'" style="position:absolute; top:15px; right:20px; background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <h3 style="margin-bottom:1rem; color:var(--accent-down);">⚠️ 게시글 삭제</h3>
+            <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem;">글을 삭제하려면 작성 시 입력한 비밀번호를 입력해 주세요.</p>
+            <input type="hidden" id="delete-post-id">
+            <input type="password" id="delete-post-password" placeholder="비밀번호 입력" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); border-radius:8px; color:white; margin-bottom:1.5rem;" required>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="document.getElementById('delete-post-modal').style.display='none'" style="padding:8px 16px; background:rgba(255,255,255,0.1); border:none; border-radius:6px; color:white; cursor:pointer;">취소</button>
+                <button onclick="confirmDeletePost()" style="padding:8px 16px; background:var(--accent-down); border:none; border-radius:6px; color:white; cursor:pointer;">삭제하기</button>
             </div>
         </div>
     </div>

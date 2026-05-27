@@ -673,6 +673,157 @@ def update_rss_cache_background():
             print("[Background Engine] [DONE] 주기적 갱신 완료!")
         except Exception as e:
             print(f"[Background Engine] [ERROR] 주기적 갱신 오류: {e}")
+
+# ── 토론 게시판 Supabase & Fallback 설정 ──
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+
+# Supabase가 없을 때 임시로 사용할 메모리 DB (ID 카운터 포함)
+mock_posts = [
+    {
+        "id": 1,
+        "nickname": "Tony",
+        "title": "Tony's Stock Today 게시판 오픈! 🎉",
+        "content": "글로벌 증시 및 주요 섹터에 대해 자유롭게 토론해 보세요. Supabase DB 연결 전에는 메모리 모드로 동작하며, 서버 재시작 시 초기화됩니다.",
+        "created_at": (datetime.now() - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M"),
+        "password_hash": "1234"
+    }
+]
+mock_post_id_counter = 2
+board_lock = threading.Lock()
+
+def request_supabase(path, method="GET", body=None):
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{path}"
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json"
+        }
+        if method == "POST":
+            headers["Prefer"] = "return=representation"
+        
+        req_data = json.dumps(body).encode('utf-8') if body else None
+        req = urllib.request.Request(url, data=req_data, headers=headers, method=method)
+        
+        with urllib.request.urlopen(req, timeout=5) as response:
+            resp_data = response.read().decode('utf-8')
+            return json.loads(resp_data) if resp_data else True
+    except Exception as e:
+        print(f"[Board DB] Supabase request failed: {e}")
+        return None
+
+@app.route('/api/board', methods=['GET'])
+def get_board_posts():
+    global mock_posts
+    posts = request_supabase("posts?select=*&order=created_at.desc&limit=50", "GET")
+    if posts is not None:
+        clean_posts = []
+        for p in posts:
+            clean_posts.append({
+                "id": p.get("id"),
+                "nickname": p.get("nickname"),
+                "title": p.get("title"),
+                "content": p.get("content"),
+                "created_at": p.get("created_at")
+            })
+        return jsonify(clean_posts)
+        
+    with board_lock:
+        clean_posts = []
+        for p in mock_posts:
+            clean_posts.append({
+                "id": p["id"],
+                "nickname": p["nickname"],
+                "title": p["title"],
+                "content": p["content"],
+                "created_at": p["created_at"]
+            })
+        # 역순 (최신순)
+        return jsonify(list(reversed(clean_posts)))
+
+@app.route('/api/board', methods=['POST'])
+def create_board_post():
+    global mock_posts, mock_post_id_counter
+    try:
+        req_data = request.get_json() or {}
+        nickname = req_data.get("nickname", "").strip()[:15]
+        title = req_data.get("title", "").strip()[:50]
+        content = req_data.get("content", "").strip()[:1000]
+        password = req_data.get("password", "").strip()[:20]
+        
+        if not nickname or not title or not content or not password:
+            return jsonify({"error": "모든 필드를 입력해 주세요."}), 400
+            
+        created_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+        
+        db_body = {
+            "nickname": nickname,
+            "title": title,
+            "content": content,
+            "password_hash": password,
+            "created_at": created_time
+        }
+        res = request_supabase("posts", "POST", db_body)
+        if res:
+            return jsonify({"success": True})
+            
+        with board_lock:
+            new_post = {
+                "id": mock_post_id_counter,
+                "nickname": nickname,
+                "title": title,
+                "content": content,
+                "password_hash": password,
+                "created_at": created_time
+            }
+            mock_posts.append(new_post)
+            mock_post_id_counter += 1
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": f"서버 오류: {e}"}), 500
+
+@app.route('/api/board/delete', methods=['POST'])
+def delete_board_post():
+    global mock_posts
+    try:
+        req_data = request.get_json() or {}
+        post_id = req_data.get("id")
+        password = req_data.get("password", "").strip()
+        
+        if not post_id or not password:
+            return jsonify({"error": "ID와 비밀번호를 입력해 주세요."}), 400
+            
+        target_post = request_supabase(f"posts?id=eq.{post_id}", "GET")
+        if target_post is not None:
+            if not target_post:
+                return jsonify({"error": "존재하지 않는 게시글입니다."}), 404
+            db_pw = target_post[0].get("password_hash")
+            if db_pw == password:
+                res = request_supabase(f"posts?id=eq.{post_id}", "DELETE")
+                if res:
+                    return jsonify({"success": True})
+            else:
+                return jsonify({"error": "비밀번호가 일치하지 않습니다."}), 403
+                
+        with board_lock:
+            found = None
+            for p in mock_posts:
+                if p["id"] == int(post_id):
+                    found = p
+                    break
+            if not found:
+                return jsonify({"error": "존재하지 않는 게시글입니다."}), 404
+            if found["password_hash"] == password:
+                mock_posts.remove(found)
+                return jsonify({"success": True})
+            else:
+                return jsonify({"error": "비밀번호가 일치하지 않습니다."}), 403
+    except Exception as e:
+        return jsonify({"error": f"서버 오류: {e}"}), 500
+
 @app.route("/")
 def home():
     return send_from_directory(".", "index.html")
