@@ -42,10 +42,10 @@ function createMarketCard(market) {
                 <div class="metric-box current-box">
                     <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${mockData.dates.current})</span></span>
                     <div class="metric-content">
-                        <span class="metric-value highlight">${market.value}</span>
-                        <span class="metric-pct ${getPercentClass(market.changes.today)}">
+                        <span class="metric-pct ${getPercentClass(market.changes.today)}" style="margin-bottom: 2px;">
                             ${market.changes.today.pct > 0 ? '▲' : market.changes.today.pct < 0 ? '▼' : ''} ${Math.abs(market.changes.today.pct)}%
                         </span>
+                        <span class="metric-value highlight">${market.value}</span>
                     </div>
                 </div>
                 ${renderMetric('1일전比', mockData.dates.d1, market.changes.d1)}
@@ -177,10 +177,10 @@ function createCompanyCard(company) {
                 <div class="metric-box current-box">
                     <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${mockData.dates.current})</span></span>
                     <div class="metric-content">
-                        <span class="metric-value highlight">${company.value}</span>
-                        <span class="metric-pct ${getPercentClass(company.changes.today)}">
+                        <span class="metric-pct ${getPercentClass(company.changes.today)}" style="margin-bottom: 2px;">
                             ${company.changes.today.pct > 0 ? '▲' : company.changes.today.pct < 0 ? '▼' : ''} ${Math.abs(company.changes.today.pct)}%
                         </span>
+                        <span class="metric-value highlight">${company.value}</span>
                     </div>
                 </div>
                 ${renderMetric('1일전比', mockData.dates.d1, company.changes.d1)}
