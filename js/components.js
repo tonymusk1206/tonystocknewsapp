@@ -230,159 +230,38 @@ function renderCompanies() {
     container.innerHTML = html;
 }
 
-// 4. 주요 뉴스 렌더링
-function renderNews() {
-    if (!mockData) return;
-    const container = document.getElementById('news-container');
-    if (container && mockData.news) {
-        container.innerHTML = mockData.news.map(news => `
-            <a href="${news.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch; padding: 1.2rem; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid transparent; transition: all 0.2s;">
-
-                <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                    <div>
-                        <h3 style="transition: color 0.2s; font-size: 1.1rem; line-height: 1.3; margin-bottom: 8px;">${news.title}</h3>
-                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
-                            ${news.hashtags ? news.hashtags.split(' ').map(tag => `<span style="font-size: 0.75rem; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 3px 8px; border-radius: 6px; font-weight: 500;">${tag}</span>`).join('') : ''}
-                        </div>
-                    </div>
-                    <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
-                        <span style="color: var(--accent-brand); font-weight: bold;">${news.source}</span>
-                        <span>|</span>
-                        <span style="color: var(--text-secondary);">${news.date}</span>
-                    </div>
-                </div>
-            </a>
-        `).join('');
-    }
-    
-    // 키워드 뉴스 함께 호출
-    renderKeywordNews();
-}
-
-// 4-2. 실시간 키워드별 뉴스 렌더링
-function renderKeywordNews() {
-    if (!mockData || !mockData.keywordNews) return;
-    const container = document.getElementById('keyword-news-container');
-    if (!container) return;
-    
-    container.innerHTML = mockData.keywordNews.map(kwObj => `
-        <div class="glass-card keyword-group-card" style="padding: 1.5rem; background: rgba(20, 22, 31, 0.6);">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-highlight); padding-bottom: 0.8rem;">
-                <span style="font-size: 1.2rem; background: rgba(59, 130, 246, 0.15); padding: 4px 10px; border-radius: 8px; color: var(--accent-brand); font-weight: bold;">
-                    # ${kwObj.keyword}
-                </span>
-                <span style="font-size: 0.85rem; color: var(--text-secondary);">관련 인기 뉴스 TOP 3</span>
-            </div>
-            <div class="news-list" style="gap: 1rem;">
-                ${kwObj.news.map(n => `
-                    <a href="${n.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1rem; align-items: stretch; padding: 1rem; background: rgba(0,0,0,0.25);">
-
-                        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                            <h4 style="font-size: 1rem; transition: color 0.2s; line-height: 1.3;">${n.title}</h4>
-                            <div style="margin-top: 8px; display: flex; gap: 8px; font-size: 0.75rem; color: var(--text-secondary);">
-                                <span style="color: var(--accent-brand);">${n.source}</span>
-                                <span>|</span>
-                                <span>${n.date}</span>
-                            </div>
-                        </div>
-                    </a>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
-}
-
-// 5. 주요 인사 발언 렌더링
-function renderQuotes() {
-    if (!mockData) return;
-    const container = document.getElementById('quotes-container');
-    container.innerHTML = mockData.quotes.map(quote => `
-        <a href="${quote.link}" target="_blank" class="glass-card quote-card" style="text-decoration: none; color: inherit; display: block;">
-            <div class="quote-icon">"</div>
-            <p class="quote-text">${quote.text}</p>
-            <div class="quote-author">
-                <div class="author-avatar" style="background: url('${quote.image}') center/cover; color: transparent; border: 1px solid var(--border-highlight);"></div>
-                <div class="author-info">
-                    <strong>${quote.author}</strong>
-                    <span>${quote.role} · ${quote.date}</span>
-                </div>
-            </div>
-        </a>
-    `).join('');
-}
-
-// 6. 유튜브 인사이트 렌더링
-function renderYoutube() {
-    if (!mockData || !mockData.youtube) return;
-    const container = document.getElementById('youtube-container');
-    if (!container) return;
-    
-    container.innerHTML = mockData.youtube.map(video => `
-        <a href="${video.link}" target="_blank" class="news-item" style="text-decoration: none; color: inherit; display: flex; gap: 1.5rem; align-items: stretch; background: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.2);">
-            <div class="news-content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-                <h3 style="transition: color 0.2s;">${video.title}</h3>
-                <div class="news-meta" style="margin-top: 12px; display: flex; gap: 10px; align-items: center;">
-                    <span style="color:#ef4444; font-weight: 700;">${video.channel}</span>
-                    <span>|</span>
-                    <span>업로드: ${video.date}</span>
-                </div>
-            </div>
-        </a>
-    `).join('');
-}
-
-// ── 7. 탭 전환 제어 로직 (Navigation Tabs) ──
+// ── 탭 전환 제어 로직 (Navigation Tabs) ──
 function initTabs() {
     const tabBtns = document.querySelectorAll('.tab-btn');
     if (!tabBtns.length) return;
 
-    // 각 탭별 표시할 섹션 ID 맵핑
     const tabSectionMap = {
         'tab-market': ['market-overview-section', 'sector-performance-section'],
         'tab-companies': ['company-performance-section'],
-        'tab-insights': ['quotes-section', 'youtube-section'],
-        'tab-search': ['search-section']
     };
 
     function switchTab(targetTabId) {
-        // 버튼 활성화 상태 업데이트
         tabBtns.forEach(btn => {
-            if (btn.dataset.tab === targetTabId) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            btn.classList.toggle('active', btn.dataset.tab === targetTabId);
         });
-
-        // 모든 섹션을 검사하여 탭 대상에 속하면 표시, 아니면 숨김
         const allSections = document.querySelectorAll('.dashboard-section');
         const activeSectionIds = tabSectionMap[targetTabId] || [];
-
         allSections.forEach(section => {
-            if (activeSectionIds.includes(section.id)) {
-                section.classList.remove('hidden-tab');
-            } else {
-                section.classList.add('hidden-tab');
-            }
+            section.classList.toggle('hidden-tab', !activeSectionIds.includes(section.id));
         });
     }
 
-    // 클릭 리스너 등록
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-            if (tabId) switchTab(tabId);
+            if (btn.dataset.tab) switchTab(btn.dataset.tab);
         });
     });
 
-    // 초기 상태 셋팅 (기본 active 탭인 tab-market 섹션만 표시)
     switchTab('tab-market');
 }
 
-// DOM이 준비되거나 스크립트가 로드되었을 때 탭 기능 활성화
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTabs);
 } else {
     initTabs();
 }
-
