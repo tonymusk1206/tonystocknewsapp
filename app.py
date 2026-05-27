@@ -558,22 +558,24 @@ def fetch_and_cache_market_data():
 
         if data.empty:
             print("[BG Market] 모든 티커 다운로드 실패, 스킵")
+            if data_cache["data"] is None:
+                temp_fallback = dict(FALLBACK_DATA)
+                temp_fallback["baseDate"] = f"{datetime.now().strftime('%Y년 %m월 %d일 %H:%M')} (일시적 수집 오류 - 임시 데이터)"
+                data_cache["data"] = temp_fallback
             return
 
-        # ── 최적화 ②: 1분봉 realtime 제거 → 병렬 fast_info로 현재가 조회 ──
+        # ── 최적화 ②: 1분봉 realtime 및 fast_info 다중 호출 제거 → 다운로드 데이터에서 추출 ──
         realtime_prices = {}
-        def fetch_fast_price(sym):
-            try:
-                fi = yf.Ticker(sym).fast_info
-                price = fi.get('lastPrice') or fi.get('regularMarketPrice')
-                return sym, float(price) if price else None
-            except:
-                return sym, None
-        t1 = time.time()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex:
-            for sym, price in ex.map(fetch_fast_price, unique_tickers):
-                if price: realtime_prices[sym] = price
-        print(f"[BG Market] 실시간 가격(fast_info) 완료: {time.time()-t1:.2f}s")
+        if not data.empty:
+            for sym in unique_tickers:
+                try:
+                    if sym in data.columns.levels[0]:
+                        hist = data[sym].dropna(subset=['Close'])
+                        if not hist.empty:
+                            realtime_prices[sym] = float(hist['Close'].iloc[-1])
+                except:
+                    pass
+
         spx_hist = data["^GSPC"].dropna(subset=['Close']) if "^GSPC" in data.columns.levels[0] else None
         def standard_date(days_ago):
             if spx_hist is None or spx_hist.empty: return ""
@@ -633,9 +635,18 @@ def fetch_and_cache_market_data():
         }
         data_cache["data"] = result
         data_cache["last_updated"] = time.time()
+        try:
+            with open(CACHE_FILE, "w", encoding="utf-8") as f:
+                json.dump({"market_data": result, "rss_data": rss_cache}, f, ensure_ascii=False, indent=4)
+        except Exception as file_err:
+            print(f"[BG Market] 캐시 파일 쓰기 실패: {file_err}")
         print("[BG Market] [SUCCESS] 주식 데이터 캐시 갱신 완료!")
     except Exception as e:
         print(f"[BG Market] [ERROR] 오류: {e}")
+        if data_cache["data"] is None:
+            temp_fallback = dict(FALLBACK_DATA)
+            temp_fallback["baseDate"] = f"{datetime.now().strftime('%Y년 %m월 %d일 %H:%M')} (일시적 수집 오류 - 임시 데이터)"
+            data_cache["data"] = temp_fallback
 
 # ── 번역 없는 빠른 뉴스 (초기 로딩용) ──
 # ── 번역 없는 빠른 인사 발언 (초기 로딩용) ──
