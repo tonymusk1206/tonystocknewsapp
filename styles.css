@@ -230,6 +230,7 @@ h3 {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    table-layout: fixed;
 }
 
 .data-table th {
@@ -251,6 +252,14 @@ h3 {
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     transition: var(--transition-fast);
     white-space: nowrap; /* Prevent wrapped tables */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.data-table td:first-child {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .data-table tr:last-child td {

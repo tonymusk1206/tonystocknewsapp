@@ -126,6 +126,17 @@ function createSectorTableHTML(sectors) {
     `).join('');
 
     return `
+        <colgroup>
+            <col style="width: 18%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+        </colgroup>
         <thead>
             <tr>
                 <th style="text-align:left;">자산 (ETF)</th>
@@ -181,6 +192,17 @@ function createMarketCapTableHTML(caps) {
     `).join('');
 
     return `
+        <colgroup>
+            <col style="width: 18%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+        </colgroup>
         <thead>
             <tr>
                 <th style="text-align:left;">분류 (ETF)</th>
