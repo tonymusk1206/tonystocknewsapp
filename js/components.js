@@ -150,6 +150,54 @@ function renderSectors() {
     document.getElementById('sector-title').innerText = `📊 섹터별 성과 분석 (${mockData.baseDate})`;
     document.getElementById('us-sectors-table').innerHTML = createSectorTableHTML(mockData.usSectors);
     document.getElementById('kr-sectors-table').innerHTML = createSectorTableHTML(mockData.krSectors);
+    // 미국 시가총액 분류별 추이
+    if (mockData.usMarketCap) {
+        document.getElementById('us-marketcap-table').innerHTML = createMarketCapTableHTML(mockData.usMarketCap);
+    }
+}
+
+// 미국 시가총액 분류별 추이 테이블
+function createMarketCapTableHTML(caps) {
+    if (!mockData) return '';
+    let rows = caps.map(cap => `
+        <tr onclick="window.open('https://finance.yahoo.com/quote/' + '${cap.yahoo_ticker}', '_blank')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
+            <td>
+                <div class="ticker-name">${cap.desc} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-secondary);">(${cap.capRange})</span></div>
+                <span class="ticker-desc" style="display: block; margin-top: 3px; color: var(--accent-brand); font-size: 0.85em; font-weight: 600;">${cap.ticker}</span>
+                <span style="display: block; margin-top: 3px; color: var(--text-muted); font-size: 0.75em; line-height: 1.3;">대표: ${cap.topCompanies}</span>
+            </td>
+            <td style="font-weight: 600;">
+                <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(cap.changes.today, true)}</div>
+                <div style="font-size: 1rem;">${cap.value}</div>
+            </td>
+            <td>${formatPercent(cap.changes.d1)}</td>
+            <td>${formatPercent(cap.changes.d3)}</td>
+            <td>${formatPercent(cap.changes.w1)}</td>
+            <td>${formatPercent(cap.changes.m1)}</td>
+            <td>${formatPercent(cap.changes.m3)}</td>
+            <td>${formatPercent(cap.changes.m6)}</td>
+            <td>${formatPercent(cap.changes.y1)}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <thead>
+            <tr>
+                <th style="text-align:left;">분류 (ETF)</th>
+                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
+                <th>1일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d1})</span></th>
+                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
+                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
+                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
+                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
+                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
+                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rows}
+        </tbody>
+    `;
 }
 
 function createCompanyCard(company) {

@@ -40,6 +40,8 @@ FALLBACK_DATA = {
         { "name": "Shanghai Comp", "region": "중국", "ticker": "SSEC", "yahoo_ticker": "000001.SS", "value": "3,065.25", "changes": { "today": {"pct": -0.4, "price": "3,077.48"}, "d1": {"pct": -0.8, "price": "3,089.88"}, "d3": {"pct": 0.4, "price": "3,052.98"}, "w1": {"pct": -1.2, "price": "3,102.48"}, "m1": {"pct": 2.5, "price": "2,990.48"}, "m3": {"pct": 6.8, "price": "2,870.08"}, "m6": {"pct": 1.5, "price": "3,019.96"}, "y1": {"pct": -5.4, "price": "3,240.90"} } }
     ],
     "usSectors": [
+        { "ticker": "SOXX", "yahoo_ticker": "SOXX", "name": "Semiconductors", "desc": "반도체", "value": "220.50", "changes": { "today": {"pct": 1.8, "price": "216.60"}, "d1": {"pct": 2.5, "price": "215.12"}, "d3": {"pct": 1.2, "price": "217.88"}, "w1": {"pct": 5.5, "price": "209.00"}, "m1": {"pct": 10.2, "price": "200.09"}, "m3": {"pct": 18.5, "price": "186.08"}, "m6": {"pct": 25.8, "price": "175.28"}, "y1": {"pct": 48.2, "price": "148.78"} } },
+        { "ticker": "IGV", "yahoo_ticker": "IGV", "name": "Software", "desc": "소프트웨어", "value": "95.80", "changes": { "today": {"pct": 1.2, "price": "94.66"}, "d1": {"pct": 1.8, "price": "94.11"}, "d3": {"pct": 0.8, "price": "95.04"}, "w1": {"pct": 3.8, "price": "92.29"}, "m1": {"pct": 7.5, "price": "89.12"}, "m3": {"pct": 14.8, "price": "83.45"}, "m6": {"pct": 20.2, "price": "79.70"}, "y1": {"pct": 38.5, "price": "69.17"} } },
         { "ticker": "XLK", "yahoo_ticker": "XLK", "name": "Technology", "desc": "기술", "value": "215.30", "changes": { "today": {"pct": 1.4, "price": "212.33"}, "d1": {"pct": 2.1, "price": "210.87"}, "d3": {"pct": 0.5, "price": "214.22"}, "w1": {"pct": 4.2, "price": "206.62"}, "m1": {"pct": 8.5, "price": "198.43"}, "m3": {"pct": 16.2, "price": "185.28"}, "m6": {"pct": 21.5, "price": "177.11"}, "y1": {"pct": 42.1, "price": "151.51"} } },
         { "ticker": "XLI", "yahoo_ticker": "XLI", "name": "Industrials", "desc": "산업재", "value": "118.42", "changes": { "today": {"pct": 0.3, "price": "118.07"}, "d1": {"pct": 0.5, "price": "117.83"}, "d3": {"pct": 1.2, "price": "117.02"}, "w1": {"pct": 2.4, "price": "115.64"}, "m1": {"pct": 4.5, "price": "113.34"}, "m3": {"pct": 11.2, "price": "106.49"}, "m6": {"pct": 15.8, "price": "102.26"}, "y1": {"pct": 22.5, "price": "96.67"} } },
         { "ticker": "XLY", "yahoo_ticker": "XLY", "name": "Cons. Discr.", "desc": "임의소비재", "value": "185.12", "changes": { "today": {"pct": 0.7, "price": "183.83"}, "d1": {"pct": 1.1, "price": "183.11"}, "d3": {"pct": -1.2, "price": "187.38"}, "w1": {"pct": 1.8, "price": "181.85"}, "m1": {"pct": 4.2, "price": "177.66"}, "m3": {"pct": 9.5, "price": "169.06"}, "m6": {"pct": 12.8, "price": "164.11"}, "y1": {"pct": 25.6, "price": "147.39"} } },
@@ -51,6 +53,11 @@ FALLBACK_DATA = {
         { "ticker": "XLU", "yahoo_ticker": "XLU", "name": "Utilities", "desc": "유틸리티", "value": "65.30", "changes": { "today": {"pct": -0.5, "price": "65.63"}, "d1": {"pct": -0.8, "price": "65.82"}, "d3": {"pct": 0.2, "price": "65.17"}, "w1": {"pct": -1.5, "price": "66.29"}, "m1": {"pct": 1.2, "price": "64.52"}, "m3": {"pct": -2.5, "price": "66.97"}, "m6": {"pct": 1.8, "price": "64.14"}, "y1": {"pct": 5.6, "price": "61.84"} } },
         { "ticker": "XLB", "yahoo_ticker": "XLB", "name": "Materials", "desc": "소재", "value": "88.90", "changes": { "today": {"pct": 0.4, "price": "88.55"}, "d1": {"pct": 0.7, "price": "88.28"}, "d3": {"pct": 1.5, "price": "87.59"}, "w1": {"pct": 2.1, "price": "87.07"}, "m1": {"pct": 3.8, "price": "85.65"}, "m3": {"pct": 8.5, "price": "81.94"}, "m6": {"pct": 11.2, "price": "79.95"}, "y1": {"pct": 18.5, "price": "75.02"} } },
         { "ticker": "XLRE", "yahoo_ticker": "XLRE", "name": "Real Estate", "desc": "부동산", "value": "41.50", "changes": { "today": {"pct": -0.9, "price": "41.87"}, "d1": {"pct": -1.5, "price": "42.13"}, "d3": {"pct": -2.5, "price": "42.56"}, "w1": {"pct": -3.2, "price": "42.87"}, "m1": {"pct": 1.5, "price": "40.89"}, "m3": {"pct": 5.6, "price": "39.30"}, "m6": {"pct": 8.2, "price": "38.35"}, "y1": {"pct": 12.5, "price": "36.89"} } }
+    ],
+    "usMarketCap": [
+        { "ticker": "VV", "yahoo_ticker": "VV", "name": "Large Cap", "desc": "대형주", "capRange": "시가총액 상위 85%", "topCompanies": "NVIDIA, Apple, Microsoft, Amazon, Alphabet", "value": "235.40", "changes": { "today": {"pct": 0.9, "price": "233.28"}, "d1": {"pct": 1.4, "price": "232.15"}, "d3": {"pct": 0.6, "price": "234.00"}, "w1": {"pct": 3.2, "price": "228.10"}, "m1": {"pct": 6.8, "price": "220.41"}, "m3": {"pct": 13.5, "price": "207.40"}, "m6": {"pct": 18.2, "price": "199.15"}, "y1": {"pct": 28.5, "price": "183.27"} } },
+        { "ticker": "VO", "yahoo_ticker": "VO", "name": "Mid Cap", "desc": "중형주", "capRange": "시가총액 70~85%", "topCompanies": "Smurfit WestRock, Williams-Sonoma, Deckers, Carlisle, Targa Resources", "value": "248.60", "changes": { "today": {"pct": 0.5, "price": "247.36"}, "d1": {"pct": 0.8, "price": "246.62"}, "d3": {"pct": 1.2, "price": "245.66"}, "w1": {"pct": 2.1, "price": "243.48"}, "m1": {"pct": 4.5, "price": "237.89"}, "m3": {"pct": 9.8, "price": "226.41"}, "m6": {"pct": 14.5, "price": "217.12"}, "y1": {"pct": 22.1, "price": "203.60"} } },
+        { "ticker": "VB", "yahoo_ticker": "VB", "name": "Small Cap", "desc": "소형주", "capRange": "시가총액 하위 15%", "topCompanies": "Vaxcyte, Comfort Systems, FTAI Aviation, Sprouts Farmers, Saia", "value": "215.80", "changes": { "today": {"pct": 0.3, "price": "215.15"}, "d1": {"pct": 0.6, "price": "214.51"}, "d3": {"pct": 1.5, "price": "212.61"}, "w1": {"pct": 1.8, "price": "212.00"}, "m1": {"pct": 3.2, "price": "209.12"}, "m3": {"pct": 7.5, "price": "200.74"}, "m6": {"pct": 11.8, "price": "193.02"}, "y1": {"pct": 18.5, "price": "182.11"} } }
     ],
     "krSectors": [
         { "ticker": "KODEX 정보기술", "yahoo_ticker": "229200.KS", "name": "Technology", "desc": "정보기술", "value": "₩42,100", "changes": { "today": {"pct": 0.8, "price": "₩41,763"}, "d1": {"pct": 1.2, "price": "₩41,602"}, "d3": {"pct": -1.2, "price": "₩42,614"}, "w1": {"pct": 2.8, "price": "₩40,953"}, "m1": {"pct": 5.5, "price": "₩39,905"}, "m3": {"pct": 12.1, "price": "₩37,555"}, "m6": {"pct": 15.8, "price": "₩36,358"}, "y1": {"pct": 28.5, "price": "₩32,763"} } },
@@ -511,6 +518,7 @@ def fetch_and_cache_market_data():
         "Materials & Chem (소재/화학)": [("Linde", "LIN"), ("Sherwin-Wms", "SHW"), ("LG화학", "051910.KS"), ("SK이노베이션", "096770.KS"), ("S-Oil", "010950.KS")]
     }
     us_sectors = [
+        {"ticker": "SOXX", "name": "Semiconductors", "desc": "반도체"}, {"ticker": "IGV", "name": "Software", "desc": "소프트웨어"},
         {"ticker": "XLK", "name": "Technology", "desc": "기술"}, {"ticker": "XLI", "name": "Industrials", "desc": "산업재"},
         {"ticker": "XLY", "name": "Cons. Discr.", "desc": "임의소비재"}, {"ticker": "XLP", "name": "Cons. Staples", "desc": "필수소비재"},
         {"ticker": "XLE", "name": "Energy", "desc": "에너지"}, {"ticker": "XLV", "name": "Health Care", "desc": "헬스케어"},
@@ -530,7 +538,12 @@ def fetch_and_cache_market_data():
         {"ticker": "266360.KS", "display": "KODEX 미디어", "name": "Media", "desc": "미디어"},
         {"ticker": "266410.KS", "display": "KODEX 필수소비재", "name": "Cons. Staples", "desc": "필수소비재"}
     ]
-    all_tickers = list(market_tickers.values()) + [s["ticker"] for s in us_sectors] + [s["ticker"] for s in kr_sectors]
+    us_marketcap = [
+        {"ticker": "VV", "name": "Large Cap", "desc": "대형주", "capRange": "시가총액 상위 85%", "topCompanies": "NVIDIA, Apple, Microsoft, Amazon, Alphabet"},
+        {"ticker": "VO", "name": "Mid Cap", "desc": "중형주", "capRange": "시가총액 70~85%", "topCompanies": "Smurfit WestRock, Williams-Sonoma, Deckers, Carlisle, Targa Resources"},
+        {"ticker": "VB", "name": "Small Cap", "desc": "소형주", "capRange": "시가총액 하위 15%", "topCompanies": "Vaxcyte, Comfort Systems, FTAI Aviation, Sprouts Farmers, Saia"}
+    ]
+    all_tickers = list(market_tickers.values()) + [s["ticker"] for s in us_sectors] + [s["ticker"] for s in kr_sectors] + [m["ticker"] for m in us_marketcap]
     for c_list in company_tickers_full.values():
         all_tickers.extend([item[1] for item in c_list])
     unique_tickers = list(set(all_tickers))
@@ -625,6 +638,7 @@ def fetch_and_cache_market_data():
                 {"name": "Shanghai Comp", "region": "중국", "ticker": "SSEC", "yahoo_ticker": "000001.SS", **process_ticker("000001.SS", "idx")}
             ],
             "usSectors": [{"ticker": s["ticker"], "yahoo_ticker": s["ticker"], "name": s["name"], "desc": s["desc"], **process_ticker(s["ticker"], "usd")} for s in us_sectors],
+            "usMarketCap": [{"ticker": m["ticker"], "yahoo_ticker": m["ticker"], "name": m["name"], "desc": m["desc"], "capRange": m["capRange"], "topCompanies": m["topCompanies"], **process_ticker(m["ticker"], "usd")} for m in us_marketcap],
             "krSectors": [{"ticker": s["display"], "yahoo_ticker": s["ticker"], "name": s["name"], "desc": s["desc"], **process_ticker(s["ticker"], "krw")} for s in kr_sectors],
             "companiesBySector": {
                 sector: [{"name": item[0], "ticker": item[1].replace(".KS", ""), "yahoo_ticker": item[1], "logo": "", **process_ticker(item[1], "krw" if ".KS" in item[1] else "usd")} for item in t_list]
