@@ -1143,17 +1143,32 @@ def _fetch_breadth_components():
     global _breadth_components
     if _breadth_components["fetched"]:
         return
+        
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+    
     try:
-        tables = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+        url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html = resp.read().decode('utf-8')
+        tables = pd.read_html(html)
         _breadth_components["sp500"] = tables[0]['Symbol'].str.replace('.', '-', regex=False).tolist()
         print(f"[Breadth] S&P 500 구성종목 로드: {len(_breadth_components['sp500'])}개")
     except Exception as e:
         print(f"[Breadth] S&P 500 구성종목 로드 실패: {e}")
+        
     try:
-        tables = pd.read_html('https://en.wikipedia.org/wiki/Nasdaq-100')
+        url = 'https://en.wikipedia.org/wiki/Nasdaq-100'
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html = resp.read().decode('utf-8')
+        tables = pd.read_html(html)
         for t in tables:
             if 'Ticker' in t.columns:
                 _breadth_components["nasdaq100"] = t['Ticker'].tolist()
+                break
+            elif 'Symbol' in t.columns:
+                _breadth_components["nasdaq100"] = t['Symbol'].tolist()
                 break
         print(f"[Breadth] NASDAQ-100 구성종목 로드: {len(_breadth_components['nasdaq100'])}개")
     except Exception as e:
@@ -1185,7 +1200,7 @@ def _calc_breadth_from_data(tickers, data):
 def _fetch_kr_breadth():
     """네이버 금융에서 KOSPI/KOSDAQ 상승·하락 종목수 가져오기"""
     result = {}
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
 
     for market, code in [('kospi', 'KOSPI'), ('kosdaq', 'KOSDAQ')]:
         try:
@@ -1195,26 +1210,22 @@ def _fetch_kr_breadth():
                 raw = resp.read()
                 text = raw.decode('euc-kr', errors='replace')
 
-            # 네이버 금융 시세 페이지에서 상승/하락/보합 종목수 파싱
-            adv_m = re.search(r'상승\s*<em[^>]*class="[^"]*n_num[^"]*"[^>]*>(\d[\d,]*)', text)
-            if not adv_m:
-                adv_m = re.search(r'상승\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
-            if not adv_m:
-                adv_m = re.search(r'class="stk_up"[^>]*>(\d[\d,]*)', text)
-
-            dec_m = re.search(r'하락\s*<em[^>]*class="[^"]*n_num[^"]*"[^>]*>(\d[\d,]*)', text)
-            if not dec_m:
-                dec_m = re.search(r'하락\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
-            if not dec_m:
-                dec_m = re.search(r'class="stk_dw"[^>]*>(\d[\d,]*)', text)
-
-            unch_m = re.search(r'보합\s*<em[^>]*>(\d[\d,]*)', text)
-            if not unch_m:
-                unch_m = re.search(r'보합\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
-
-            adv_val = int(adv_m.group(1).replace(',', '')) if adv_m else 0
-            dec_val = int(dec_m.group(1).replace(',', '')) if dec_m else 0
-            unch_val = int(unch_m.group(1).replace(',', '')) if unch_m else 0
+            # blind 및 span 기반 정형화된 정규식으로 파싱
+            limit_up_m = re.search(r'<span class="blind">상한종목수</span>\s*<a href="[^"]*"><span>(\d+)</span>', text)
+            rise_m = re.search(r'<span class="blind">상승종목수</span>\s*<a href="[^"]*"><span>(\d+)</span>', text)
+            steady_m = re.search(r'<span class="blind">보합종목수</span>\s*<a href="[^"]*"><span>(\d+)</span>', text)
+            fall_m = re.search(r'<span class="blind">하락종목수</span>\s*<a href="[^"]*"><span>(\d+)</span>', text)
+            limit_down_m = re.search(r'<span class="blind">하한종목수</span>\s*<a href="[^"]*"><span>(\d+)</span>', text)
+            
+            limit_up = int(limit_up_m.group(1)) if limit_up_m else 0
+            rise = int(rise_m.group(1)) if rise_m else 0
+            steady = int(steady_m.group(1)) if steady_m else 0
+            fall = int(fall_m.group(1)) if fall_m else 0
+            limit_down = int(limit_down_m.group(1)) if limit_down_m else 0
+            
+            adv_val = rise + limit_up
+            dec_val = fall + limit_down
+            unch_val = steady
             total = adv_val + dec_val + unch_val
 
             result[market] = {
@@ -1226,32 +1237,6 @@ def _fetch_kr_breadth():
         except Exception as e:
             print(f"[Breadth] KR {market} 에러: {e}")
             result[market] = {'advancing': 0, 'declining': 0, 'unchanged': 0, 'total': 0, 'advPct': 0, 'decPct': 0}
-
-    # 파싱 실패 시 네이버 모바일 API 시도 (폴백)
-    for market in ['kospi', 'kosdaq']:
-        if result.get(market, {}).get('total', 0) == 0:
-            try:
-                murl = f'https://m.stock.naver.com/api/index/{market.upper()}/total'
-                req2 = urllib.request.Request(murl, headers={
-                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)',
-                    'Accept': 'application/json'
-                })
-                with urllib.request.urlopen(req2, timeout=10) as resp2:
-                    jdata = json.loads(resp2.read().decode('utf-8'))
-                if isinstance(jdata, dict):
-                    adv_val = jdata.get('advanceCount', jdata.get('riseCount', 0))
-                    dec_val = jdata.get('declineCount', jdata.get('fallCount', 0))
-                    unch_val = jdata.get('flatCount', jdata.get('evenCount', 0))
-                    total = adv_val + dec_val + unch_val
-                    if total > 0:
-                        result[market] = {
-                            'advancing': adv_val, 'declining': dec_val, 'unchanged': unch_val, 'total': total,
-                            'advPct': round(adv_val / total * 100, 1),
-                            'decPct': round(dec_val / total * 100, 1)
-                        }
-                        print(f"[Breadth] {market.upper()} 모바일 API 폴백 성공")
-            except Exception as e2:
-                print(f"[Breadth] KR {market} 모바일 API 폴백 실패: {e2}")
 
     return result
 
