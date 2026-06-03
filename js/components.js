@@ -433,8 +433,9 @@ function createBreadthCardHTML(title, subtitle, data) {
 }
 
 function renderBreadthData(data) {
-    const usContainer = document.getElementById('us-breadth-container');
-    const krContainer = document.getElementById('kr-breadth-container');
+    const usContainer = document.getElementById('modal-us-breadth-container');
+    const krContainer = document.getElementById('modal-kr-breadth-container');
+    const updatedTime = document.getElementById('breadth-updated-time');
 
     if (usContainer) {
         let html = '';
@@ -447,9 +448,6 @@ function renderBreadthData(data) {
         if (data.dow30) {
             html += createBreadthCardHTML('Dow Jones 30', `${data.dow30.total}개 종목 기준`, data.dow30);
         }
-        if (data.lastUpdated) {
-            html += `<div style="text-align:right; font-size:0.72rem; color:var(--text-muted); margin-top:0.5rem;">최종 업데이트: ${data.lastUpdated}</div>`;
-        }
         usContainer.innerHTML = html || '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">데이터를 가져올 수 없습니다.</div>';
     }
 
@@ -461,33 +459,124 @@ function renderBreadthData(data) {
         if (data.kosdaq && data.kosdaq.total > 0) {
             html += createBreadthCardHTML('KOSDAQ', `${data.kosdaq.total}개 종목 기준`, data.kosdaq);
         }
-        if (data.lastUpdated) {
-            html += `<div style="text-align:right; font-size:0.72rem; color:var(--text-muted); margin-top:0.5rem;">최종 업데이트: ${data.lastUpdated}</div>`;
-        }
         krContainer.innerHTML = html || '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">데이터를 가져올 수 없습니다.</div>';
+    }
+
+    if (updatedTime && data.lastUpdated) {
+        updatedTime.innerText = `최종 분석 시각: ${data.lastUpdated}`;
     }
 }
 
-// Breadth 데이터 별도 fetch (기존 market-data와 완전 독립)
-function fetchBreadthData() {
+let breadthPollingInterval = null;
+
+// 온디맨드 시장 등락 분석 실행 함수
+function startBreadthAnalysis() {
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? `http://${window.location.host}`
         : 'https://tony-stock-news.onrender.com';
 
-    fetch(`${API_BASE}/api/market-breadth`)
+    const loadingView = document.getElementById('breadth-loading-view');
+    const resultView = document.getElementById('breadth-result-view');
+    const statusTitle = document.getElementById('breadth-status-title');
+    const statusDesc = document.getElementById('breadth-status-desc');
+    const errorAction = document.getElementById('breadth-error-action');
+
+    // UI 초기화
+    loadingView.style.display = 'flex';
+    resultView.style.display = 'none';
+    statusTitle.innerText = '분석 준비 중...';
+    statusDesc.innerText = '서버에 분석 요청을 보내는 중입니다.';
+    errorAction.style.display = 'none';
+
+    // 분석 시작 요청
+    fetch(`${API_BASE}/api/market-breadth/start`, { method: 'POST' })
         .then(res => res.json())
-        .then(data => {
-            if (data && !data.error) {
-                renderBreadthData(data);
+        .then(resData => {
+            if (resData.status === 'completed') {
+                // 이미 최근 캐시가 있어서 즉시 완료된 경우
+                statusTitle.innerText = '분석 완료';
+                fetchBreadthStatus(API_BASE);
+            } else {
+                // 분석 중인 경우 폴링 시작
+                statusTitle.innerText = '분석 중...';
+                statusDesc.innerText = resData.progress || '서버에서 등락 분석 프로세스가 시작되었습니다.';
+                
+                // 기존 폴링이 있으면 초기화
+                if (breadthPollingInterval) clearInterval(breadthPollingInterval);
+                
+                breadthPollingInterval = setInterval(() => {
+                    fetchBreadthStatus(API_BASE);
+                }, 1500);
             }
         })
-        .catch(err => console.log('[Breadth] fetch error:', err));
+        .catch(err => {
+            console.error('[Breadth] Start error:', err);
+            showBreadthError('분석 요청을 시작하지 못했습니다.', '네트워크 연결 상태를 확인하고 다시 시도해 주세요.');
+        });
 }
 
-// 페이지 로드 시 breadth 데이터 로드 (기존 데이터와 독립 타이밍)
-(function initBreadth() {
-    // 기존 데이터 로드 완료 후 3초 뒤에 breadth 로드 시작 (부하 분산)
-    setTimeout(fetchBreadthData, 3000);
-    // 5분마다 자동 갱신
-    setInterval(fetchBreadthData, 300000);
-})();
+// 상태 체크 및 결과 렌더링
+function fetchBreadthStatus(apiBase) {
+    const loadingView = document.getElementById('breadth-loading-view');
+    const resultView = document.getElementById('breadth-result-view');
+    const statusTitle = document.getElementById('breadth-status-title');
+    const statusDesc = document.getElementById('breadth-status-desc');
+
+    fetch(`${apiBase}/api/market-breadth/status`)
+        .then(res => res.json())
+        .then(statusData => {
+            if (statusData.status === 'running') {
+                statusTitle.innerText = '실시간 분석 중...';
+                statusDesc.innerText = statusData.progress || '데이터를 가져오고 있습니다.';
+            } else if (statusData.status === 'completed') {
+                if (breadthPollingInterval) {
+                    clearInterval(breadthPollingInterval);
+                    breadthPollingInterval = null;
+                }
+                // 결과 UI 노출 및 렌더링
+                loadingView.style.display = 'none';
+                resultView.style.display = 'block';
+                renderBreadthData(statusData.data);
+            } else if (statusData.status === 'error') {
+                if (breadthPollingInterval) {
+                    clearInterval(breadthPollingInterval);
+                    breadthPollingInterval = null;
+                }
+                showBreadthError('시장 등락 분석 중 오류가 발생했습니다.', statusData.error_message || '데이터 수집 중 예외가 발생했습니다.');
+            }
+        })
+        .catch(err => {
+            console.error('[Breadth] Status error:', err);
+        });
+}
+
+function showBreadthError(title, desc) {
+    const statusTitle = document.getElementById('breadth-status-title');
+    const statusDesc = document.getElementById('breadth-status-desc');
+    const errorAction = document.getElementById('breadth-error-action');
+
+    statusTitle.innerText = title;
+    statusDesc.innerText = desc;
+    errorAction.style.display = 'block';
+}
+
+// 페이지 로드 시 모달 버튼 바인딩 및 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    const btnOpenBreadth = document.getElementById('btn-open-breadth');
+    const btnRetryBreadth = document.getElementById('btn-retry-breadth');
+    const modal = document.getElementById('market-breadth-modal');
+
+    if (btnOpenBreadth && modal) {
+        btnOpenBreadth.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            startBreadthAnalysis();
+        });
+    }
+
+    if (btnRetryBreadth) {
+        btnRetryBreadth.addEventListener('click', () => {
+            startBreadthAnalysis();
+        });
+    }
+});
+

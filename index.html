@@ -22,6 +22,10 @@
                 <h1>Tony's Stock Today</h1>
             </div>
             <div class="header-right">
+                <button id="btn-open-breadth" class="btn-premium-breadth">
+                    <span class="btn-icon">📊</span>
+                    <span>시장 등락 분석</span>
+                </button>
                 <div class="last-updated">
                     <span class="pulse-dot"></span>
                     <span id="base-date-display">Live Data</span>
@@ -99,25 +103,6 @@
                             </table>
                         </div>
                     </div>
-                    <!-- 시장 상승/하락 종목 현황 -->
-                    <div class="column glass-card">
-                        <div class="column-header">
-                            <span class="flag">🇺🇸</span>
-                            <h3>미국 시장 상승/하락 종목 현황</h3>
-                        </div>
-                        <div id="us-breadth-container" class="breadth-container">
-                            <div style="text-align:center; padding:2rem; color:var(--text-secondary);">데이터 로딩 중...</div>
-                        </div>
-                    </div>
-                    <div class="column glass-card">
-                        <div class="column-header">
-                            <span class="flag">🇰🇷</span>
-                            <h3>한국 시장 상승/하락 종목 현황</h3>
-                        </div>
-                        <div id="kr-breadth-container" class="breadth-container">
-                            <div style="text-align:center; padding:2rem; color:var(--text-secondary);">데이터 로딩 중...</div>
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -193,6 +178,60 @@
             <div style="display:flex; gap:10px; justify-content:flex-end;">
                 <button onclick="document.getElementById('delete-post-modal').style.display='none'" style="padding:8px 16px; background:rgba(255,255,255,0.1); border:none; border-radius:6px; color:white; cursor:pointer;">취소</button>
                 <button onclick="confirmDeletePost()" style="padding:8px 16px; background:var(--accent-down); border:none; border-radius:6px; color:white; cursor:pointer;">삭제하기</button>
+    </div>
+
+    <!-- 시장 등락 분석 모달 -->
+    <div id="market-breadth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(10px); z-index:9999; justify-content:center; align-items:center;">
+        <div class="glass-card modal-content-breadth" style="padding:2.5rem; max-width:800px; width:90%; position:relative; max-height:85vh; display:flex; flex-direction:column; overflow:hidden;">
+            <button onclick="document.getElementById('market-breadth-modal').style.display='none'" style="position:absolute; top:20px; right:20px; background:transparent; border:none; color:white; font-size:1.8rem; cursor:pointer; line-height:1;">&times;</button>
+            
+            <div class="modal-header-section" style="margin-bottom:1.5rem;">
+                <h2 style="margin:0 0 0.5rem 0; color:var(--accent-brand); font-family:'Outfit', sans-serif; font-size:1.8rem; display:flex; align-items:center; gap:0.5rem;">
+                    <span>📊</span> 실시간 시장 등락 비율 (Breadth)
+                </h2>
+                <p style="margin:0; color:var(--text-secondary); font-size:0.95rem;">미국/한국 시장의 600여개 주요 종목 등락 현황을 실시간으로 분석합니다.</p>
+            </div>
+            
+            <!-- 1. 분석 대기/진행 상태 화면 -->
+            <div id="breadth-loading-view" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 1rem; flex-grow:1; text-align:center;">
+                <div class="spinner-container">
+                    <div class="spinner-premium"></div>
+                </div>
+                <h3 id="breadth-status-title" style="margin:1.5rem 0 0.5rem 0; color:white; font-size:1.2rem;">분석 준비 중...</h3>
+                <p id="breadth-status-desc" style="margin:0; color:var(--text-secondary); font-size:0.9rem; max-width:400px; line-height:1.5;">미국 주식 API 데이터 수집을 준비하고 있습니다. 잠시만 기다려주세요.</p>
+                <div id="breadth-error-action" style="display:none; margin-top:1.5rem;">
+                    <button id="btn-retry-breadth" class="btn-retry" style="padding:10px 20px; background:var(--accent-brand); border:none; border-radius:8px; color:white; font-weight:600; cursor:pointer; transition:all 0.2s;">다시 분석하기</button>
+                </div>
+            </div>
+            
+            <!-- 2. 분석 완료 화면 -->
+            <div id="breadth-result-view" style="display:none; overflow-y:auto; flex-grow:1; padding-right:0.5rem;">
+                <div class="breadth-grid">
+                    <!-- 미국 시장 -->
+                    <div class="breadth-section-card">
+                        <div class="breadth-section-header" style="display:flex; align-items:center; gap:8px; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
+                            <span class="flag">🇺🇸</span>
+                            <h3 style="margin:0; font-size:1.1rem; color:white;">미국 증시 등락 (U.S. Market)</h3>
+                        </div>
+                        <div id="modal-us-breadth-container" class="breadth-container">
+                            <!-- JS Injected -->
+                        </div>
+                    </div>
+                    
+                    <!-- 한국 시장 -->
+                    <div class="breadth-section-card">
+                        <div class="breadth-section-header" style="display:flex; align-items:center; gap:8px; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
+                            <span class="flag">🇰🇷</span>
+                            <h3 style="margin:0; font-size:1.1rem; color:white;">한국 증시 등락 (K.R. Market)</h3>
+                        </div>
+                        <div id="modal-kr-breadth-container" class="breadth-container">
+                            <!-- JS Injected -->
+                        </div>
+                    </div>
+                </div>
+                <div id="breadth-updated-time" style="text-align:right; font-size:0.75rem; color:var(--text-muted); margin-top:1.5rem; border-top:1px solid rgba(255,255,255,0.08); padding-top:0.8rem;">
+                    최종 분석 시각: -
+                </div>
             </div>
         </div>
     </div>

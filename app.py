@@ -1118,10 +1118,16 @@ def search_stock():
     })
 # ══════════════════════════════════════════════════════════════════════
 # 시장 Breadth (상승/하락 종목수) - 기존 코드와 100% 독립 모듈
-# 별도 스레드, 별도 캐시, 별도 API. 기존 데이터 수집에 영향 ZERO.
+# 온디맨드 실행 및 상태 폴링 구조로 리팩토링 완료
 # ══════════════════════════════════════════════════════════════════════
 
-breadth_cache = {"data": None, "last_updated": 0}
+breadth_status = {
+    "status": "idle",       # "idle", "running", "completed", "error"
+    "progress": "대기 중",
+    "data": None,
+    "last_updated": 0,
+    "error_message": None
+}
 
 # DOW 30 구성 종목 (2025년 기준)
 DOW30_TICKERS = [
@@ -1190,7 +1196,6 @@ def _fetch_kr_breadth():
                 text = raw.decode('euc-kr', errors='replace')
 
             # 네이버 금융 시세 페이지에서 상승/하락/보합 종목수 파싱
-            # 패턴: class="n_ch" ... 상승 N ... 하락 N ... 보합 N
             adv_m = re.search(r'상승\s*<em[^>]*class="[^"]*n_num[^"]*"[^>]*>(\d[\d,]*)', text)
             if not adv_m:
                 adv_m = re.search(r'상승\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
@@ -1252,10 +1257,14 @@ def _fetch_kr_breadth():
 
 
 def fetch_and_cache_breadth():
-    """시장 Breadth 데이터 수집 (별도 스레드에서 실행)"""
-    global breadth_cache
+    """시장 Breadth 데이터 온디맨드 수집"""
+    global breadth_status
     t0 = time.time()
     try:
+        breadth_status['status'] = 'running'
+        breadth_status['error_message'] = None
+
+        breadth_status['progress'] = '미국 시장 구성 종목(S&P 500, NASDAQ-100, DOW 30) 리스트 로딩 중...'
         _fetch_breadth_components()
         sp500 = _breadth_components.get("sp500", [])
         nq100 = _breadth_components.get("nasdaq100", [])
@@ -1263,6 +1272,8 @@ def fetch_and_cache_breadth():
 
         # 모든 미국 티커를 합쳐 1회 다운로드 (중복 제거)
         all_us = list(set(dow30 + sp500 + nq100))
+        
+        breadth_status['progress'] = f'미국 시장 {len(all_us)}개 종목 데이터 다운로드 중 (약 15-30초 소요)...'
         print(f"[Breadth] 미국 총 {len(all_us)}개 티커 다운로드 시작...")
 
         us_data = pd.DataFrame()
@@ -1270,11 +1281,12 @@ def fetch_and_cache_breadth():
             try:
                 us_data = yf.download(
                     all_us, period='5d', group_by='ticker',
-                    threads=True, progress=False, timeout=30, auto_adjust=True
+                    threads=True, progress=False, timeout=40, auto_adjust=True
                 )
             except Exception as e:
                 print(f"[Breadth] 미국 데이터 다운로드 실패: {e}")
 
+        breadth_status['progress'] = '미국 지수별(S&P 500, NASDAQ-100, DOW 30) 등락 비율 분석 중...'
         result = {
             'sp500': _calc_breadth_from_data(sp500, us_data) if sp500 and not us_data.empty else None,
             'nasdaq100': _calc_breadth_from_data(nq100, us_data) if nq100 and not us_data.empty else None,
@@ -1285,40 +1297,88 @@ def fetch_and_cache_breadth():
         }
 
         # 한국 시장 Breadth (네이버 금융)
+        breadth_status['progress'] = '한국 시장(KOSPI, KOSDAQ) 등락 정보 수집 중...'
         kr = _fetch_kr_breadth()
         result['kospi'] = kr.get('kospi')
         result['kosdaq'] = kr.get('kosdaq')
 
-        breadth_cache['data'] = result
-        breadth_cache['last_updated'] = time.time()
+        breadth_status['data'] = result
+        breadth_status['last_updated'] = time.time()
+        breadth_status['status'] = 'completed'
+        breadth_status['progress'] = '분석 완료'
         print(f"[Breadth] 캐시 갱신 완료! (소요: {time.time()-t0:.1f}s)")
     except Exception as e:
         print(f"[Breadth] 오류: {e}")
+        breadth_status['status'] = 'error'
+        breadth_status['progress'] = '분석 중 오류가 발생했습니다.'
+        breadth_status['error_message'] = str(e)
 
 
-def _breadth_scheduler():
-    """Breadth 데이터 주기적 수집 (15분마다, 기존 데이터와 독립)"""
-    time.sleep(30)  # 서버 시작 후 30초 대기 (기존 데이터 수집과 겹치지 않도록)
-    while True:
-        try:
-            fetch_and_cache_breadth()
-        except Exception as e:
-            print(f"[Breadth Scheduler] 오류: {e}")
-        time.sleep(900)  # 15분마다 갱신
+@app.route('/api/market-breadth/start', methods=['GET', 'POST'])
+def api_market_breadth_start():
+    """시장 Breadth 분석 시작 요청 API"""
+    global breadth_status
+    
+    # 1시간 이내 유효한 캐시가 있다면 시작하지 않고 기존 캐시 사용
+    cache_timeout = 3600
+    now = time.time()
+    
+    if (breadth_status['status'] == 'completed' and 
+        breadth_status['data'] and 
+        (now - breadth_status['last_updated'] < cache_timeout)):
+        return jsonify({
+            "status": "completed",
+            "progress": "최근 1시간 내의 분석 결과가 캐시에 보존되어 있습니다.",
+            "lastUpdated": breadth_status['data'].get('lastUpdated')
+        })
+        
+    if breadth_status['status'] == 'running':
+        return jsonify({
+            "status": "running",
+            "progress": breadth_status['progress']
+        })
+        
+    # 새로운 비동기 스레드를 띄워 분석을 온디맨드로 시작
+    breadth_status['status'] = 'running'
+    breadth_status['progress'] = '분석 프로세스 초기화 중...'
+    breadth_status['error_message'] = None
+    
+    t = threading.Thread(target=fetch_and_cache_breadth, daemon=True, name="BreadthOnDemandThread")
+    t.start()
+    
+    return jsonify({
+        "status": "running",
+        "progress": "분석을 준비 중입니다..."
+    })
+
+
+@app.route('/api/market-breadth/status')
+def api_market_breadth_status():
+    """시장 Breadth 현재 분석 상태 조회 API"""
+    global breadth_status
+    
+    response = {
+        "status": breadth_status['status'],
+        "progress": breadth_status['progress'],
+        "last_updated": breadth_status['last_updated']
+    }
+    
+    if breadth_status['status'] == 'completed':
+        response['data'] = breadth_status['data']
+    elif breadth_status['status'] == 'error':
+        response['error_message'] = breadth_status['error_message']
+        
+    return jsonify(response)
 
 
 @app.route('/api/market-breadth')
 def api_market_breadth():
-    """시장 Breadth API (기존 market-data API와 완전 독립)"""
-    if breadth_cache['data']:
-        return jsonify(breadth_cache['data'])
-    return jsonify({"error": "데이터 로딩 중...", "lastUpdated": None})
+    """하위 호환성 유지용 API"""
+    global breadth_status
+    if breadth_status['status'] == 'completed' and breadth_status['data']:
+        return jsonify(breadth_status['data'])
+    return jsonify({"error": "데이터 로딩 중...", "status": breadth_status['status'], "lastUpdated": None})
 
-
-# Breadth 스레드 시작 (기존 스레드와 완전 독립)
-_breadth_thread = threading.Thread(target=_breadth_scheduler, daemon=True, name="BreadthThread")
-_breadth_thread.start()
-print("[Breadth] 독립 수집 스레드 시작됨 (15분 간격)")
 
 
 if __name__ == '__main__':
