@@ -1116,8 +1116,209 @@ def search_stock():
             "naver_board": naver_board_url
         },
     })
+# ══════════════════════════════════════════════════════════════════════
+# 시장 Breadth (상승/하락 종목수) - 기존 코드와 100% 독립 모듈
+# 별도 스레드, 별도 캐시, 별도 API. 기존 데이터 수집에 영향 ZERO.
+# ══════════════════════════════════════════════════════════════════════
 
-# 서버 메인 루프 실행 전 비동기 스레드 스타트
+breadth_cache = {"data": None, "last_updated": 0}
+
+# DOW 30 구성 종목 (2025년 기준)
+DOW30_TICKERS = [
+    'AAPL','AMGN','AMZN','AXP','BA','CAT','CRM','CSCO','CVX','DIS',
+    'GS','HD','HON','IBM','JNJ','JPM','KO','MCD','MMM','MRK',
+    'MSFT','NKE','NVDA','PG','SHW','TRV','UNH','V','VZ','WMT'
+]
+
+_breadth_components = {"sp500": [], "nasdaq100": [], "fetched": False}
+
+def _fetch_breadth_components():
+    """Wikipedia에서 S&P 500, NASDAQ-100 구성종목 1회 로드 (캐시)"""
+    global _breadth_components
+    if _breadth_components["fetched"]:
+        return
+    try:
+        tables = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+        _breadth_components["sp500"] = tables[0]['Symbol'].str.replace('.', '-', regex=False).tolist()
+        print(f"[Breadth] S&P 500 구성종목 로드: {len(_breadth_components['sp500'])}개")
+    except Exception as e:
+        print(f"[Breadth] S&P 500 구성종목 로드 실패: {e}")
+    try:
+        tables = pd.read_html('https://en.wikipedia.org/wiki/Nasdaq-100')
+        for t in tables:
+            if 'Ticker' in t.columns:
+                _breadth_components["nasdaq100"] = t['Ticker'].tolist()
+                break
+        print(f"[Breadth] NASDAQ-100 구성종목 로드: {len(_breadth_components['nasdaq100'])}개")
+    except Exception as e:
+        print(f"[Breadth] NASDAQ-100 구성종목 로드 실패: {e}")
+    _breadth_components["fetched"] = True
+
+
+def _calc_breadth_from_data(tickers, data):
+    """다운로드된 데이터에서 상승/하락 종목수 계산"""
+    adv, dec, unch = 0, 0, 0
+    for t in tickers:
+        try:
+            close = data[t]['Close'].dropna()
+            if len(close) >= 2:
+                chg = close.iloc[-1] - close.iloc[-2]
+                if chg > 0: adv += 1
+                elif chg < 0: dec += 1
+                else: unch += 1
+        except:
+            pass
+    total = adv + dec + unch
+    return {
+        'advancing': adv, 'declining': dec, 'unchanged': unch, 'total': total,
+        'advPct': round(adv / total * 100, 1) if total > 0 else 0,
+        'decPct': round(dec / total * 100, 1) if total > 0 else 0
+    }
+
+
+def _fetch_kr_breadth():
+    """네이버 금융에서 KOSPI/KOSDAQ 상승·하락 종목수 가져오기"""
+    result = {}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+    for market, code in [('kospi', 'KOSPI'), ('kosdaq', 'KOSDAQ')]:
+        try:
+            url = f'https://finance.naver.com/sise/sise_index.naver?code={code}'
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                raw = resp.read()
+                text = raw.decode('euc-kr', errors='replace')
+
+            # 네이버 금융 시세 페이지에서 상승/하락/보합 종목수 파싱
+            # 패턴: class="n_ch" ... 상승 N ... 하락 N ... 보합 N
+            adv_m = re.search(r'상승\s*<em[^>]*class="[^"]*n_num[^"]*"[^>]*>(\d[\d,]*)', text)
+            if not adv_m:
+                adv_m = re.search(r'상승\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
+            if not adv_m:
+                adv_m = re.search(r'class="stk_up"[^>]*>(\d[\d,]*)', text)
+
+            dec_m = re.search(r'하락\s*<em[^>]*class="[^"]*n_num[^"]*"[^>]*>(\d[\d,]*)', text)
+            if not dec_m:
+                dec_m = re.search(r'하락\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
+            if not dec_m:
+                dec_m = re.search(r'class="stk_dw"[^>]*>(\d[\d,]*)', text)
+
+            unch_m = re.search(r'보합\s*<em[^>]*>(\d[\d,]*)', text)
+            if not unch_m:
+                unch_m = re.search(r'보합\s*</span>\s*<span[^>]*>(\d[\d,]*)', text)
+
+            adv_val = int(adv_m.group(1).replace(',', '')) if adv_m else 0
+            dec_val = int(dec_m.group(1).replace(',', '')) if dec_m else 0
+            unch_val = int(unch_m.group(1).replace(',', '')) if unch_m else 0
+            total = adv_val + dec_val + unch_val
+
+            result[market] = {
+                'advancing': adv_val, 'declining': dec_val, 'unchanged': unch_val, 'total': total,
+                'advPct': round(adv_val / total * 100, 1) if total > 0 else 0,
+                'decPct': round(dec_val / total * 100, 1) if total > 0 else 0
+            }
+            print(f"[Breadth] {market.upper()} 파싱 완료: 상승 {adv_val}, 하락 {dec_val}, 보합 {unch_val}")
+        except Exception as e:
+            print(f"[Breadth] KR {market} 에러: {e}")
+            result[market] = {'advancing': 0, 'declining': 0, 'unchanged': 0, 'total': 0, 'advPct': 0, 'decPct': 0}
+
+    # 파싱 실패 시 네이버 모바일 API 시도 (폴백)
+    for market in ['kospi', 'kosdaq']:
+        if result.get(market, {}).get('total', 0) == 0:
+            try:
+                murl = f'https://m.stock.naver.com/api/index/{market.upper()}/total'
+                req2 = urllib.request.Request(murl, headers={
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)',
+                    'Accept': 'application/json'
+                })
+                with urllib.request.urlopen(req2, timeout=10) as resp2:
+                    jdata = json.loads(resp2.read().decode('utf-8'))
+                if isinstance(jdata, dict):
+                    adv_val = jdata.get('advanceCount', jdata.get('riseCount', 0))
+                    dec_val = jdata.get('declineCount', jdata.get('fallCount', 0))
+                    unch_val = jdata.get('flatCount', jdata.get('evenCount', 0))
+                    total = adv_val + dec_val + unch_val
+                    if total > 0:
+                        result[market] = {
+                            'advancing': adv_val, 'declining': dec_val, 'unchanged': unch_val, 'total': total,
+                            'advPct': round(adv_val / total * 100, 1),
+                            'decPct': round(dec_val / total * 100, 1)
+                        }
+                        print(f"[Breadth] {market.upper()} 모바일 API 폴백 성공")
+            except Exception as e2:
+                print(f"[Breadth] KR {market} 모바일 API 폴백 실패: {e2}")
+
+    return result
+
+
+def fetch_and_cache_breadth():
+    """시장 Breadth 데이터 수집 (별도 스레드에서 실행)"""
+    global breadth_cache
+    t0 = time.time()
+    try:
+        _fetch_breadth_components()
+        sp500 = _breadth_components.get("sp500", [])
+        nq100 = _breadth_components.get("nasdaq100", [])
+        dow30 = DOW30_TICKERS
+
+        # 모든 미국 티커를 합쳐 1회 다운로드 (중복 제거)
+        all_us = list(set(dow30 + sp500 + nq100))
+        print(f"[Breadth] 미국 총 {len(all_us)}개 티커 다운로드 시작...")
+
+        us_data = pd.DataFrame()
+        if all_us:
+            try:
+                us_data = yf.download(
+                    all_us, period='5d', group_by='ticker',
+                    threads=True, progress=False, timeout=30, auto_adjust=True
+                )
+            except Exception as e:
+                print(f"[Breadth] 미국 데이터 다운로드 실패: {e}")
+
+        result = {
+            'sp500': _calc_breadth_from_data(sp500, us_data) if sp500 and not us_data.empty else None,
+            'nasdaq100': _calc_breadth_from_data(nq100, us_data) if nq100 and not us_data.empty else None,
+            'dow30': _calc_breadth_from_data(dow30, us_data) if not us_data.empty else None,
+            'kospi': None,
+            'kosdaq': None,
+            'lastUpdated': datetime.now().strftime('%Y.%m.%d %H:%M')
+        }
+
+        # 한국 시장 Breadth (네이버 금융)
+        kr = _fetch_kr_breadth()
+        result['kospi'] = kr.get('kospi')
+        result['kosdaq'] = kr.get('kosdaq')
+
+        breadth_cache['data'] = result
+        breadth_cache['last_updated'] = time.time()
+        print(f"[Breadth] 캐시 갱신 완료! (소요: {time.time()-t0:.1f}s)")
+    except Exception as e:
+        print(f"[Breadth] 오류: {e}")
+
+
+def _breadth_scheduler():
+    """Breadth 데이터 주기적 수집 (15분마다, 기존 데이터와 독립)"""
+    time.sleep(30)  # 서버 시작 후 30초 대기 (기존 데이터 수집과 겹치지 않도록)
+    while True:
+        try:
+            fetch_and_cache_breadth()
+        except Exception as e:
+            print(f"[Breadth Scheduler] 오류: {e}")
+        time.sleep(900)  # 15분마다 갱신
+
+
+@app.route('/api/market-breadth')
+def api_market_breadth():
+    """시장 Breadth API (기존 market-data API와 완전 독립)"""
+    if breadth_cache['data']:
+        return jsonify(breadth_cache['data'])
+    return jsonify({"error": "데이터 로딩 중...", "lastUpdated": None})
+
+
+# Breadth 스레드 시작 (기존 스레드와 완전 독립)
+_breadth_thread = threading.Thread(target=_breadth_scheduler, daemon=True, name="BreadthThread")
+_breadth_thread.start()
+print("[Breadth] 독립 수집 스레드 시작됨 (15분 간격)")
 
 
 if __name__ == '__main__':

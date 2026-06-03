@@ -376,3 +376,118 @@ if (document.readyState === 'loading') {
 } else {
     initTabs();
 }
+
+// ══════════════════════════════════════════════════════════════
+// 시장 Breadth (상승/하락 종목수) - 기존 코드와 100% 독립
+// ══════════════════════════════════════════════════════════════
+
+function createBreadthCardHTML(title, subtitle, data) {
+    if (!data || data.total === 0) {
+        return `<div class="breadth-card">
+            <div class="breadth-card-header">
+                <span class="breadth-card-title">${title}</span>
+            </div>
+            <div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.85rem;">데이터 수집 중...</div>
+        </div>`;
+    }
+
+    const advPct = data.advPct || 0;
+    const decPct = data.decPct || 0;
+
+    return `<div class="breadth-card">
+        <div class="breadth-card-header">
+            <span class="breadth-card-title">${title}</span>
+            <span class="breadth-card-subtitle">${subtitle}</span>
+        </div>
+        <div class="breadth-rows">
+            <div class="breadth-row">
+                <span class="breadth-icon">🐂</span>
+                <div class="breadth-info">
+                    <div class="breadth-label">
+                        <span class="breadth-label-text up">상승</span>
+                        <span class="breadth-count">${data.advancing.toLocaleString()}종목 (${advPct}%)</span>
+                    </div>
+                    <div class="breadth-bar-track">
+                        <div class="breadth-bar-fill up" style="width: ${advPct}%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="breadth-row">
+                <span class="breadth-icon">🐻</span>
+                <div class="breadth-info">
+                    <div class="breadth-label">
+                        <span class="breadth-label-text down">하락</span>
+                        <span class="breadth-count">${data.declining.toLocaleString()}종목 (${decPct}%)</span>
+                    </div>
+                    <div class="breadth-bar-track">
+                        <div class="breadth-bar-fill down" style="width: ${decPct}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="breadth-summary">
+            <div class="breadth-summary-item">보합<strong>${(data.unchanged || 0).toLocaleString()}종목</strong></div>
+            <div class="breadth-summary-item">전체<strong>${data.total.toLocaleString()}종목</strong></div>
+        </div>
+    </div>`;
+}
+
+function renderBreadthData(data) {
+    const usContainer = document.getElementById('us-breadth-container');
+    const krContainer = document.getElementById('kr-breadth-container');
+
+    if (usContainer) {
+        let html = '';
+        if (data.sp500) {
+            html += createBreadthCardHTML('S&P 500', `${data.sp500.total}개 종목 기준`, data.sp500);
+        }
+        if (data.nasdaq100) {
+            html += createBreadthCardHTML('NASDAQ-100', `${data.nasdaq100.total}개 종목 기준`, data.nasdaq100);
+        }
+        if (data.dow30) {
+            html += createBreadthCardHTML('Dow Jones 30', `${data.dow30.total}개 종목 기준`, data.dow30);
+        }
+        if (data.lastUpdated) {
+            html += `<div style="text-align:right; font-size:0.72rem; color:var(--text-muted); margin-top:0.5rem;">최종 업데이트: ${data.lastUpdated}</div>`;
+        }
+        usContainer.innerHTML = html || '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">데이터를 가져올 수 없습니다.</div>';
+    }
+
+    if (krContainer) {
+        let html = '';
+        if (data.kospi && data.kospi.total > 0) {
+            html += createBreadthCardHTML('KOSPI', `${data.kospi.total}개 종목 기준`, data.kospi);
+        }
+        if (data.kosdaq && data.kosdaq.total > 0) {
+            html += createBreadthCardHTML('KOSDAQ', `${data.kosdaq.total}개 종목 기준`, data.kosdaq);
+        }
+        if (data.lastUpdated) {
+            html += `<div style="text-align:right; font-size:0.72rem; color:var(--text-muted); margin-top:0.5rem;">최종 업데이트: ${data.lastUpdated}</div>`;
+        }
+        krContainer.innerHTML = html || '<div style="text-align:center; padding:2rem; color:var(--text-secondary);">데이터를 가져올 수 없습니다.</div>';
+    }
+}
+
+// Breadth 데이터 별도 fetch (기존 market-data와 완전 독립)
+function fetchBreadthData() {
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? `http://${window.location.host}`
+        : 'https://tony-stock-news.onrender.com';
+
+    fetch(`${API_BASE}/api/market-breadth`)
+        .then(res => res.json())
+        .then(data => {
+            if (data && !data.error) {
+                renderBreadthData(data);
+            }
+        })
+        .catch(err => console.log('[Breadth] fetch error:', err));
+}
+
+// 페이지 로드 시 breadth 데이터 로드 (기존 데이터와 독립 타이밍)
+(function initBreadth() {
+    // 기존 데이터 로드 완료 후 3초 뒤에 breadth 로드 시작 (부하 분산)
+    setTimeout(fetchBreadthData, 3000);
+    // 5분마다 자동 갱신
+    setInterval(fetchBreadthData, 300000);
+})();
