@@ -705,3 +705,107 @@ h3 {
     }
 }
 
+/* ── 모바일 가로모드(Landscape) 테이블 최적화 ── */
+/* 가로모드에서 넓은 테이블이 압축되지 않고 가로 스크롤로 편안하게 보이도록 */
+@media (max-height: 500px) and (orientation: landscape) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        border-radius: 8px;
+    }
+
+    .data-table {
+        min-width: 900px;
+        table-layout: fixed;
+    }
+
+    .data-table th {
+        padding: 10px 6px;
+        font-size: 0.8rem;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .data-table td {
+        padding: 10px 6px;
+        font-size: 0.82rem;
+    }
+
+    /* 첫 번째 칼럼(자산명) 고정 스크롤 */
+    .data-table th:first-child,
+    .data-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: #14161f;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .data-table th:first-child {
+        z-index: 3;
+    }
+
+    .data-table tbody tr:hover td:first-child {
+        background: #1a1c28;
+    }
+
+    /* 스크롤바 스타일 */
+    .table-container::-webkit-scrollbar {
+        height: 4px;
+    }
+    .table-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+    }
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+}
+
+/* 일반 모바일(세로/가로 공통) 테이블이 좁은 화면일 때 스크롤 보장 */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 800px;
+    }
+
+    .data-table th:first-child,
+    .data-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: #14161f;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .data-table th:first-child {
+        z-index: 3;
+    }
+
+    .data-table tbody tr:hover td:first-child {
+        background: #1a1c28;
+    }
+
+    /* 모바일 스크롤바 */
+    .table-container::-webkit-scrollbar {
+        height: 4px;
+    }
+    .table-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+    }
+}
