@@ -22,10 +22,6 @@
                 <h1>Tony's Stock Today</h1>
             </div>
             <div class="header-right">
-                <button id="btn-open-breadth" class="btn-premium-breadth">
-                    <span class="btn-icon">📊</span>
-                    <span>시장 등락 분석</span>
-                </button>
                 <div class="last-updated">
                     <span class="pulse-dot"></span>
                     <span id="base-date-display">Live Data</span>
@@ -54,9 +50,15 @@
         <main class="main-content">
             <!-- 1. 글로벌 주요 증시 현황 -->
             <section class="dashboard-section" id="market-overview-section">
-                <div class="section-header">
-                    <h2 id="market-title">글로벌 주요 증시 현황</h2>
-                    <p>대표적인 글로벌 지수의 국가별 현황 및 등락률</p>
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 id="market-title" style="margin-bottom: 0.5rem;">글로벌 주요 증시 현황</h2>
+                        <p style="margin: 0;">대표적인 글로벌 지수의 국가별 현황 및 등락률</p>
+                    </div>
+                    <button id="btn-open-breadth" class="btn-premium-breadth" style="margin: 0; padding: 0.6rem 1.2rem;">
+                        <span class="btn-icon">📊</span>
+                        <span>시장 등락 상세 현황</span>
+                    </button>
                 </div>
                 <div id="market-overview-container">
                     <!-- JS Injected (Grouped by Country) -->
@@ -178,6 +180,8 @@
             <div style="display:flex; gap:10px; justify-content:flex-end;">
                 <button onclick="document.getElementById('delete-post-modal').style.display='none'" style="padding:8px 16px; background:rgba(255,255,255,0.1); border:none; border-radius:6px; color:white; cursor:pointer;">취소</button>
                 <button onclick="confirmDeletePost()" style="padding:8px 16px; background:var(--accent-down); border:none; border-radius:6px; color:white; cursor:pointer;">삭제하기</button>
+            </div>
+        </div>
     </div>
 
     <!-- 시장 등락 분석 모달 -->
