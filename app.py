@@ -1271,6 +1271,16 @@ def fetch_and_cache_breadth():
             except Exception as e:
                 print(f"[Breadth] 미국 데이터 다운로드 실패: {e}")
 
+        # 미국/한국 데이터의 기준 날짜 계산
+        us_base_date = datetime.now().strftime('%Y.%m.%d')
+        if not us_data.empty:
+            try:
+                us_base_date = us_data.index[-1].strftime('%Y.%m.%d')
+            except Exception as dt_e:
+                print(f"[Breadth] 미국 날짜 변환 에러: {dt_e}")
+                
+        kr_base_date = datetime.now().strftime('%Y.%m.%d')
+
         breadth_status['progress'] = '미국 지수별(S&P 500, NASDAQ-100, DOW 30) 등락 비율 분석 중...'
         result = {
             'sp500': _calc_breadth_from_data(sp500, us_data) if sp500 and not us_data.empty else None,
@@ -1278,6 +1288,8 @@ def fetch_and_cache_breadth():
             'dow30': _calc_breadth_from_data(dow30, us_data) if not us_data.empty else None,
             'kospi': None,
             'kosdaq': None,
+            'usBaseDate': us_base_date,
+            'krBaseDate': kr_base_date,
             'lastUpdated': datetime.now().strftime('%Y.%m.%d %H:%M')
         }
 

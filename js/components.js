@@ -436,6 +436,7 @@ function renderBreadthData(data) {
     const usContainer = document.getElementById('modal-us-breadth-container');
     const krContainer = document.getElementById('modal-kr-breadth-container');
     const updatedTime = document.getElementById('breadth-updated-time');
+    const baseDatesEl = document.getElementById('breadth-base-dates');
 
     if (usContainer) {
         let html = '';
@@ -465,6 +466,10 @@ function renderBreadthData(data) {
     if (updatedTime && data.lastUpdated) {
         updatedTime.innerText = `최종 분석 시각: ${data.lastUpdated}`;
     }
+
+    if (baseDatesEl && data.usBaseDate && data.krBaseDate) {
+        baseDatesEl.innerHTML = `기준 일자: 미국 <strong>${data.usBaseDate}</strong> | 한국 <strong>${data.krBaseDate}</strong>`;
+    }
 }
 
 let breadthPollingInterval = null;
@@ -487,6 +492,11 @@ function startBreadthAnalysis() {
     statusTitle.innerText = '분석 준비 중...';
     statusDesc.innerText = '서버에 분석 요청을 보내는 중입니다.';
     errorAction.style.display = 'none';
+
+    const baseDatesEl = document.getElementById('breadth-base-dates');
+    if (baseDatesEl) {
+        baseDatesEl.innerText = '기준 일자: 분석 중...';
+    }
 
     // 분석 시작 요청
     fetch(`${API_BASE}/api/market-breadth/start`, { method: 'POST' })
