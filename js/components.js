@@ -54,6 +54,7 @@ function createMarketCard(market) {
                 ${renderMetric('3달전比', mockData.dates.m3, market.changes.m3)}
                 ${renderMetric('6달전比', mockData.dates.m6, market.changes.m6)}
                 ${renderMetric('1년전比', mockData.dates.y1, market.changes.y1)}
+                ${renderMetric('3년전比', mockData.dates.y3, market.changes.y3)}
             </div>
         </div>
     `;
@@ -120,19 +121,21 @@ function createSectorTableHTML(sectors) {
             <td>${formatPercent(sector.changes.m3)}</td>
             <td>${formatPercent(sector.changes.m6)}</td>
             <td>${formatPercent(sector.changes.y1)}</td>
+            <td>${formatPercent(sector.changes.y3)}</td>
         </tr>
     `).join('');
 
     return `
         <colgroup>
-            <col style="width: 20%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
+            <col style="width: 18%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
         </colgroup>
         <thead>
             <tr>
@@ -144,6 +147,7 @@ function createSectorTableHTML(sectors) {
                 <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
                 <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
                 <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
+                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y3})</span></th>
             </tr>
         </thead>
         <tbody>
@@ -183,19 +187,21 @@ function createMarketCapTableHTML(caps) {
             <td>${formatPercent(cap.changes.m3)}</td>
             <td>${formatPercent(cap.changes.m6)}</td>
             <td>${formatPercent(cap.changes.y1)}</td>
+            <td>${formatPercent(cap.changes.y3)}</td>
         </tr>
     `).join('');
 
     return `
         <colgroup>
-            <col style="width: 20%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
-            <col style="width: 11.4%;">
+            <col style="width: 18%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
         </colgroup>
         <thead>
             <tr>
@@ -207,6 +213,7 @@ function createMarketCapTableHTML(caps) {
                 <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
                 <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
                 <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
+                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y3})</span></th>
             </tr>
         </thead>
         <tbody>
@@ -252,6 +259,7 @@ function createCompanyCard(company) {
                 ${renderMetric('3개월전比', mockData.dates.m3, company.changes.m3)}
                 ${renderMetric('6개월전比', mockData.dates.m6, company.changes.m6)}
                 ${renderMetric('1년전比', mockData.dates.y1, company.changes.y1)}
+                ${renderMetric('3년전比', mockData.dates.y3, company.changes.y3)}
             </div>
         </div>
     `;
