@@ -43,7 +43,6 @@ function createMarketCard(market) {
             </div>
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    ${market.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
                     <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${dates.current})</span></span>
                     <div class="metric-content">
                         <span class="metric-pct ${getPercentClass(market.changes.today)}" style="margin-bottom: 2px;">
@@ -117,8 +116,7 @@ function createSectorTableHTML(sectors, region) {
                 <div class="ticker-name">${sector.name} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-secondary);">(${sector.desc})</span></div>
                 <span class="ticker-desc" style="display: block; margin-top: 4px; color: var(--text-muted); font-size: 0.8em; font-weight: 500;">(${sector.ticker})</span>
             </td>
-            <td style="font-weight: 600; position: relative; overflow: visible;">
-                ${sector.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
+            <td style="font-weight: 600;">
                 <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(sector.changes.today, true)}</div>
                 <div style="font-size: 1rem;">${sector.value}</div>
             </td>
@@ -190,8 +188,7 @@ function createMarketCapTableHTML(caps) {
                 <span class="ticker-desc" style="display: block; margin-top: 3px; color: var(--accent-brand); font-size: 0.85em; font-weight: 600;">${cap.ticker}</span>
                 <span style="display: block; margin-top: 3px; color: var(--text-muted); font-size: 0.75em; line-height: 1.3;">대표: ${cap.topCompanies}</span>
             </td>
-            <td style="font-weight: 600; position: relative; overflow: visible;">
-                ${cap.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
+            <td style="font-weight: 600;">
                 <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(cap.changes.today, true)}</div>
                 <div style="font-size: 1rem;">${cap.value}</div>
             </td>
@@ -262,7 +259,6 @@ function createCompanyCard(company) {
             
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    ${company.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
                     <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${dates.current})</span></span>
                     <div class="metric-content">
                         <span class="metric-pct ${getPercentClass(company.changes.today)}" style="margin-bottom: 2px;">
@@ -626,8 +622,7 @@ function createStyleTableHTML(styles) {
                     <div class="ticker-name" style="font-weight: 700; color: var(--accent-brand);">${etf.desc} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-secondary);">(${etf.strategy})</span></div>
                     <span class="ticker-desc" style="display: block; margin-top: 3px; color: var(--text-muted); font-size: 0.85em; font-weight: 600;">${etf.ticker}</span>
                 </td>
-                <td style="font-weight: 600; position: relative; overflow: visible;">
-                    ${etf.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
+                <td style="font-weight: 600;">
                     <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(etf.changes.today, true)}</div>
                     <div style="font-size: 1rem;">${etf.value}</div>
                 </td>
@@ -655,8 +650,7 @@ function createStyleTableHTML(styles) {
                         </div>
                         <span class="ticker-desc" style="display: block; margin-left: 12px; margin-top: 2px; color: var(--text-muted); font-size: 0.78em;">${stock.ticker}</span>
                     </td>
-                    <td style="font-size: 0.95rem; position: relative; overflow: visible;">
-                        ${stock.pending ? `<div class="pending-tooltip" style="bottom: 110%;">전일 데이터 반영중</div>` : ''}
+                    <td style="font-size: 0.95rem;">
                         <div style="margin-bottom: 2px;">${formatPercent(stock.changes.today, true)}</div>
                         <div style="color: var(--text-secondary); font-size: 0.9em;">${stock.value}</div>
                     </td>

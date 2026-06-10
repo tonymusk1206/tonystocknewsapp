@@ -652,6 +652,8 @@ def fetch_and_cache_market_data():
                     pass
 
         spx_hist = data["^GSPC"].dropna(subset=['Close']) if "^GSPC" in data.columns.levels[0] else None
+        kospi_hist = data["^KS11"].dropna(subset=['Close']) if "^KS11" in data.columns.levels[0] else None
+
         def standard_date(days_ago):
             if spx_hist is None or spx_hist.empty: return ""
             idx = min(days_ago, len(spx_hist)-1)
@@ -661,14 +663,10 @@ def fetch_and_cache_market_data():
             try:
                 if data.empty or t_sym not in data.columns.levels[0]: return {"value": "N/A", "pending": False, "changes": empty_changes}
                 raw_ticker_data = data[t_sym]
-                latest_raw_date = raw_ticker_data.index[-1]
                 hist = raw_ticker_data.dropna(subset=['Close'])
                 if hist.empty: return {"value": "N/A", "pending": False, "changes": empty_changes}
                 
-                latest_valid_date = hist.index[-1]
                 pending = False
-                if latest_valid_date and latest_raw_date > latest_valid_date:
-                    pending = True
                 
                 daily_close = float(hist['Close'].iloc[-1])
                 current_close = realtime_prices.get(t_sym, daily_close)
@@ -681,19 +679,17 @@ def fetch_and_cache_market_data():
                 return {"value": format_price(current_close), "pending": pending, "changes": {k: {"pct": v["pct"], "price": format_price(v["raw_price"])} for k, v in raw_changes.items()}}
             except:
                 return {"value": "N/A", "pending": False, "changes": empty_changes}
-        # 실제 거래일 기준 날짜 추출 (결측치 없는 원본 기준)
-        spx_raw = data["^GSPC"] if "^GSPC" in data.columns.levels[0] else None
-        kospi_raw = data["^KS11"] if "^KS11" in data.columns.levels[0] else None
 
+        # 실제 거래일 기준 날짜 추출 (결측치 없는 유효 거래일 기준)
         def us_trading_date(days_ago):
-            if spx_raw is None or spx_raw.empty: return ""
-            idx = min(days_ago, len(spx_raw)-1)
-            return spx_raw.index[-1 - idx].strftime('%y.%m.%d')
+            if spx_hist is None or spx_hist.empty: return ""
+            idx = min(days_ago, len(spx_hist)-1)
+            return spx_hist.index[-1 - idx].strftime('%y.%m.%d')
 
         def kr_trading_date(days_ago):
-            if kospi_raw is None or kospi_raw.empty: return ""
-            idx = min(days_ago, len(kospi_raw)-1)
-            return kospi_raw.index[-1 - idx].strftime('%y.%m.%d')
+            if kospi_hist is None or kospi_hist.empty: return ""
+            idx = min(days_ago, len(kospi_hist)-1)
+            return kospi_hist.index[-1 - idx].strftime('%y.%m.%d')
 
         result = {
             "baseDate": f"{datetime.now().strftime('%Y년 %m월 %d일 %H:%M')} 라이브 API 기준",
