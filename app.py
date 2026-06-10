@@ -763,8 +763,9 @@ def fetch_and_cache_market_data():
         data_cache["data"] = result
         data_cache["last_updated"] = time.time()
         try:
+            rss_cache_serializable = {k: v for k, v in rss_cache.items() if k != "lock"}
             with open(CACHE_FILE, "w", encoding="utf-8") as f:
-                json.dump({"market_data": result, "rss_data": rss_cache}, f, ensure_ascii=False, indent=4)
+                json.dump({"market_data": result, "rss_data": rss_cache_serializable}, f, ensure_ascii=False, indent=4)
         except Exception as file_err:
             print(f"[BG Market] 캐시 파일 쓰기 실패: {file_err}")
         print("[BG Market] [SUCCESS] 주식 데이터 캐시 갱신 완료!")
