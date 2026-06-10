@@ -165,6 +165,10 @@ function renderSectors() {
     if (mockData.usMarketCap) {
         document.getElementById('us-marketcap-table').innerHTML = createMarketCapTableHTML(mockData.usMarketCap);
     }
+    // 미국 투자 스타일 및 대표 주식 추이
+    if (mockData.usStyle) {
+        document.getElementById('us-style-table').innerHTML = createStyleTableHTML(mockData.usStyle);
+    }
 }
 
 // 미국 시가총액 분류별 추이 테이블
@@ -589,4 +593,96 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// 미국 투자 스타일 및 대표 주식 추이 테이블 렌더러
+function createStyleTableHTML(styles) {
+    if (!mockData) return '';
+    let rows = [];
+    
+    styles.forEach(item => {
+        const etf = item.etf;
+        const stocks = item.stocks;
+        
+        // 1. ETF 행 추가
+        rows.push(`
+            <tr onclick="window.open('https://finance.yahoo.com/quote/' + '${etf.yahoo_ticker}', '_blank')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
+                <td>
+                    <div class="ticker-name" style="font-weight: 700; color: var(--accent-brand);">${etf.desc} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-secondary);">(${etf.strategy})</span></div>
+                    <span class="ticker-desc" style="display: block; margin-top: 3px; color: var(--text-muted); font-size: 0.85em; font-weight: 600;">${etf.ticker}</span>
+                </td>
+                <td style="font-weight: 600;">
+                    <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(etf.changes.today, true)}</div>
+                    <div style="font-size: 1rem;">${etf.value}</div>
+                </td>
+                <td>${formatPercent(etf.changes.d3)}</td>
+                <td>${formatPercent(etf.changes.w1)}</td>
+                <td>${formatPercent(etf.changes.m1)}</td>
+                <td>${formatPercent(etf.changes.m3)}</td>
+                <td>${formatPercent(etf.changes.m6)}</td>
+                <td>${formatPercent(etf.changes.y1)}</td>
+                <td>${formatPercent(etf.changes.y3)}</td>
+            </tr>
+        `);
+        
+        // 2. 대표 주식 행 3개 추가 (점선 스타일 적용 및 들여쓰기 인디케이터 적용)
+        stocks.forEach((stock, idx) => {
+            const isFirst = idx === 0;
+            // 첫 번째 주식 행 위에 점선 보더 설정
+            const trStyle = `cursor: pointer; transition: background 0.2s; ${isFirst ? 'border-top: 1px dashed rgba(255,255,255,0.15);' : ''}`;
+            
+            rows.push(`
+                <tr onclick="window.open('https://finance.yahoo.com/quote/' + '${stock.yahoo_ticker}', '_blank')" style="${trStyle}" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background=''">
+                    <td style="padding-left: 1.5rem; position: relative;">
+                        <div class="ticker-name" style="font-size: 0.9em; color: var(--text-secondary); font-weight: 500;">
+                            <span style="color: var(--text-muted); margin-right: 4px;">└</span> ${stock.name}
+                        </div>
+                        <span class="ticker-desc" style="display: block; margin-left: 12px; margin-top: 2px; color: var(--text-muted); font-size: 0.78em;">${stock.ticker}</span>
+                    </td>
+                    <td style="font-size: 0.95rem;">
+                        <div style="margin-bottom: 2px;">${formatPercent(stock.changes.today, true)}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9em;">${stock.value}</div>
+                    </td>
+                    <td>${formatPercent(stock.changes.d3)}</td>
+                    <td>${formatPercent(stock.changes.w1)}</td>
+                    <td>${formatPercent(stock.changes.m1)}</td>
+                    <td>${formatPercent(stock.changes.m3)}</td>
+                    <td>${formatPercent(stock.changes.m6)}</td>
+                    <td>${formatPercent(stock.changes.y1)}</td>
+                    <td>${formatPercent(stock.changes.y3)}</td>
+                </tr>
+            `);
+        });
+    });
+
+    return `
+        <colgroup>
+            <col style="width: 18%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+            <col style="width: 10.25%;">
+        </colgroup>
+        <thead>
+            <tr>
+                <th style="text-align:left;">스타일 (ETF / 대표주)</th>
+                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
+                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
+                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
+                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
+                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
+                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
+                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
+                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y3})</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            ${rows.join('')}
+        </tbody>
+    `;
+}
 

@@ -45,6 +45,34 @@ const mockData = {
         { ticker: "VO", yahoo_ticker: "VO", name: "Mid Cap", desc: "중형주", capRange: "시가총액 70~85%", topCompanies: "Smurfit WestRock, Williams-Sonoma, Deckers, Carlisle, Targa Resources", value: "248.60", changes: { today: {pct: 0.5, price: "247.36"}, d3: {pct: 1.2, price: "245.66"}, w1: {pct: 2.1, price: "243.48"}, m1: {pct: 4.5, price: "237.89"}, m3: {pct: 9.8, price: "226.41"}, m6: {pct: 14.5, price: "217.12"}, y1: {pct: 22.1, price: "203.60"}, y3: {pct: 22.1, price: "203.60"} } },
         { ticker: "VB", yahoo_ticker: "VB", name: "Small Cap", desc: "소형주", capRange: "시가총액 하위 15%", topCompanies: "Vaxcyte, Comfort Systems, FTAI Aviation, Sprouts Farmers, Saia", value: "215.80", changes: { today: {pct: 0.3, price: "215.15"}, d3: {pct: 1.5, price: "212.61"}, w1: {pct: 1.8, price: "212.00"}, m1: {pct: 3.2, price: "209.12"}, m3: {pct: 7.5, price: "200.74"}, m6: {pct: 11.8, price: "193.02"}, y1: {pct: 18.5, price: "182.11"}, y3: {pct: 18.5, price: "182.11"} } }
     ],
+    
+    // 미국 투자 스타일 및 대표 주식 추이 (Vanguard/iShares)
+    usStyle: [
+        {
+            etf: { ticker: "VUG", yahoo_ticker: "VUG", name: "Growth ETF", desc: "대형 성장주 ETF", strategy: "성장/기술/혁신", value: "290.50", changes: { today: {pct: 1.2, price: "287.05"}, d3: {pct: 0.8, price: "288.20"}, w1: {pct: 2.5, price: "283.41"}, m1: {pct: 6.2, price: "273.54"}, m3: {pct: 12.5, price: "258.22"}, m6: {pct: 18.2, price: "245.72"}, y1: {pct: 28.5, price: "226.07"}, y3: {pct: 28.5, price: "226.07"} } },
+            stocks: [
+                { ticker: "MSFT", yahoo_ticker: "MSFT", name: "Microsoft", value: "415.20", changes: { today: {pct: 0.6, price: "412.72"}, d3: {pct: 0.5, price: "413.13"}, w1: {pct: 3.2, price: "402.32"}, m1: {pct: 6.5, price: "389.86"}, m3: {pct: 14.2, price: "363.57"}, m6: {pct: 21.5, price: "341.73"}, y1: {pct: 55.4, price: "267.18"}, y3: {pct: 55.4, price: "267.18"} } },
+                { ticker: "AAPL", yahoo_ticker: "AAPL", name: "Apple", value: "173.50", changes: { today: {pct: 0.9, price: "171.95"}, d3: {pct: -1.2, price: "175.62"}, w1: {pct: 2.4, price: "169.44"}, m1: {pct: 5.6, price: "164.30"}, m3: {pct: 12.4, price: "154.36"}, m6: {pct: 8.5, price: "159.91"}, y1: {pct: 22.1, price: "142.10"}, y3: {pct: 22.1, price: "142.10"} } },
+                { ticker: "NVDA", yahoo_ticker: "NVDA", name: "NVIDIA", value: "852.12", changes: { today: {pct: 2.8, price: "828.92"}, d3: {pct: 8.5, price: "785.40"}, w1: {pct: 15.2, price: "740.02"}, m1: {pct: 32.5, price: "643.11"}, m3: {pct: 85.6, price: "459.44"}, m6: {pct: 124.5, price: "379.65"}, y1: {pct: 285.6, price: "221.22"}, y3: {pct: 285.6, price: "221.22"} } }
+            ]
+        },
+        {
+            etf: { ticker: "VTV", yahoo_ticker: "VTV", name: "Value ETF", desc: "대형 가치주 ETF", strategy: "금융/에너지/가치", value: "155.40", changes: { today: {pct: 0.4, price: "154.78"}, d3: {pct: 0.5, price: "154.62"}, w1: {pct: 1.2, price: "153.55"}, m1: {pct: 3.8, price: "149.71"}, m3: {pct: 7.5, price: "144.55"}, m6: {pct: 11.2, price: "139.75"}, y1: {pct: 16.5, price: "133.39"}, y3: {pct: 16.5, price: "133.39"} } },
+            stocks: [
+                { ticker: "BRK-B", yahoo_ticker: "BRK-B", name: "Berkshire H.", value: "415.80", changes: { today: {pct: 0.4, price: "414.14"}, d3: {pct: 1.5, price: "409.66"}, w1: {pct: 2.1, price: "407.25"}, m1: {pct: 5.6, price: "393.75"}, m3: {pct: 12.5, price: "369.60"}, m6: {pct: 18.5, price: "350.97"}, y1: {pct: 28.5, price: "323.58"}, y3: {pct: 28.5, price: "323.58"} } },
+                { ticker: "JPM", yahoo_ticker: "JPM", name: "JPMorgan", value: "195.50", changes: { today: {pct: 0.7, price: "194.14"}, d3: {pct: 2.5, price: "190.73"}, w1: {pct: 3.8, price: "188.34"}, m1: {pct: 8.5, price: "180.28"}, m3: {pct: 18.5, price: "164.98"}, m6: {pct: 25.6, price: "155.65"}, y1: {pct: 38.5, price: "141.16"}, y3: {pct: 38.5, price: "141.16"} } },
+                { ticker: "XOM", yahoo_ticker: "XOM", name: "Exxon Mobil", value: "115.30", changes: { today: {pct: 0.5, price: "114.72"}, d3: {pct: -1.2, price: "116.70"}, w1: {pct: 1.8, price: "113.26"}, m1: {pct: 4.5, price: "110.33"}, m3: {pct: 6.8, price: "107.95"}, m6: {pct: 8.2, price: "106.56"}, y1: {pct: 12.5, price: "102.48"}, y3: {pct: 12.5, price: "102.48"} } }
+            ]
+        },
+        {
+            etf: { ticker: "USMV", yahoo_ticker: "USMV", name: "Min Vol ETF", desc: "경기 방어주 ETF", strategy: "저변동성/헬스/생필품", value: "78.20", changes: { today: {pct: 0.2, price: "78.04"}, d3: {pct: -0.5, price: "78.59"}, w1: {pct: 1.1, price: "77.34"}, y1: {pct: 8.5, price: "72.07"}, y3: {pct: 8.5, price: "72.07"}, m1: {pct: 2.5, price: "76.29"}, m3: {pct: 5.2, price: "74.33"}, m6: {pct: 6.8, price: "73.22"} } },
+            stocks: [
+                { ticker: "JNJ", yahoo_ticker: "JNJ", name: "Johnson & Johnson", value: "155.20", changes: { today: {pct: 0.1, price: "155.04"}, d3: {pct: 0.5, price: "154.42"}, w1: {pct: -0.8, price: "156.45"}, m1: {pct: 1.5, price: "152.90"}, m3: {pct: 3.2, price: "150.38"}, m6: {pct: 5.4, price: "147.24"}, y1: {pct: 6.8, price: "145.31"}, y3: {pct: 6.8, price: "145.31"} } },
+                { ticker: "PG", yahoo_ticker: "PG", name: "Procter & Gamble", value: "160.40", changes: { today: {pct: 0.3, price: "159.92"}, d3: {pct: 0.8, price: "159.12"}, w1: {pct: -0.5, price: "161.20"}, m1: {pct: 2.1, price: "157.09"}, m3: {pct: 4.5, price: "153.49"}, m6: {pct: 5.8, price: "151.60"}, y1: {pct: 9.2, price: "146.88"}, y3: {pct: 9.2, price: "146.88"} } },
+                { ticker: "KO", yahoo_ticker: "KO", name: "Coca-Cola", value: "60.20", changes: { today: {pct: 0.1, price: "60.14"}, d3: {pct: 0.5, price: "59.90"}, w1: {pct: -0.2, price: "60.32"}, m1: {pct: 1.2, price: "59.48"}, m3: {pct: 2.5, price: "58.73"}, m6: {pct: 4.2, price: "57.77"}, y1: {pct: 6.8, price: "56.36"}, y3: {pct: 6.8, price: "56.36"} } }
+            ]
+        }
+    ],
 
     // 6. 한국 섹터 ETF 목록 확대 (기존 5->10종)
     krSectors: [

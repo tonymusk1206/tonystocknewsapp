@@ -59,6 +59,32 @@ FALLBACK_DATA = {
         { "ticker": "VO", "yahoo_ticker": "VO", "name": "Mid Cap", "desc": "중형주", "capRange": "시가총액 70~85%", "topCompanies": "Smurfit WestRock, Williams-Sonoma, Deckers, Carlisle, Targa Resources", "value": "248.60", "changes": { "today": {"pct": 0.5, "price": "247.36"}, "d3": {"pct": 1.2, "price": "245.66"}, "w1": {"pct": 2.1, "price": "243.48"}, "m1": {"pct": 4.5, "price": "237.89"}, "m3": {"pct": 9.8, "price": "226.41"}, "m6": {"pct": 14.5, "price": "217.12"}, "y1": {"pct": 22.1, "price": "203.60"}, "y3": {"pct": 22.1, "price": "203.60"} } },
         { "ticker": "VB", "yahoo_ticker": "VB", "name": "Small Cap", "desc": "소형주", "capRange": "시가총액 하위 15%", "topCompanies": "Vaxcyte, Comfort Systems, FTAI Aviation, Sprouts Farmers, Saia", "value": "215.80", "changes": { "today": {"pct": 0.3, "price": "215.15"}, "d3": {"pct": 1.5, "price": "212.61"}, "w1": {"pct": 1.8, "price": "212.00"}, "m1": {"pct": 3.2, "price": "209.12"}, "m3": {"pct": 7.5, "price": "200.74"}, "m6": {"pct": 11.8, "price": "193.02"}, "y1": {"pct": 18.5, "price": "182.11"}, "y3": {"pct": 18.5, "price": "182.11"} } }
     ],
+    "usStyle": [
+        {
+            "etf": { "ticker": "VUG", "yahoo_ticker": "VUG", "name": "Growth ETF", "desc": "대형 성장주 ETF", "strategy": "성장/기술/혁신", "value": "$290.50", "changes": { "today": {"pct": 1.2, "price": "$287.05"}, "d3": {"pct": 0.8, "price": "$288.20"}, "w1": {"pct": 2.5, "price": "$283.41"}, "m1": {"pct": 6.2, "price": "$273.54"}, "m3": {"pct": 12.5, "price": "$258.22"}, "m6": {"pct": 18.2, "price": "$245.72"}, "y1": {"pct": 28.5, "price": "$226.07"}, "y3": {"pct": 28.5, "price": "$226.07"} } },
+            "stocks": [
+                { "ticker": "MSFT", "yahoo_ticker": "MSFT", "name": "Microsoft", "value": "$415.20", "changes": { "today": {"pct": 0.6, "price": "$412.72"}, "d3": {"pct": 0.5, "price": "$413.13"}, "w1": {"pct": 3.2, "price": "$402.32"}, "m1": {"pct": 6.5, "price": "$389.86"}, "m3": {"pct": 14.2, "price": "$363.57"}, "m6": {"pct": 21.5, "price": "$341.73"}, "y1": {"pct": 55.4, "price": "$267.18"}, "y3": {"pct": 55.4, "price": "$267.18"} } },
+                { "ticker": "AAPL", "yahoo_ticker": "AAPL", "name": "Apple", "value": "$173.50", "changes": { "today": {"pct": 0.9, "price": "$171.95"}, "d3": {"pct": -1.2, "price": "$175.62"}, "w1": {"pct": 2.4, "price": "$169.44"}, "m1": {"pct": 5.6, "price": "$164.30"}, "m3": {"pct": 12.4, "price": "$154.36"}, "m6": {"pct": 8.5, "price": "$159.91"}, "y1": {"pct": 22.1, "price": "$142.10"}, "y3": {"pct": 22.1, "price": "$142.10"} } },
+                { "ticker": "NVDA", "yahoo_ticker": "NVDA", "name": "NVIDIA", "value": "$852.12", "changes": { "today": {"pct": 2.8, "price": "$828.92"}, "d3": {"pct": 8.5, "price": "$785.40"}, "w1": {"pct": 15.2, "price": "$740.02"}, "m1": {"pct": 32.5, "price": "$643.11"}, "m3": {"pct": 85.6, "price": "$459.44"}, "m6": {"pct": 124.5, "price": "$379.65"}, "y1": {"pct": 285.6, "price": "$221.22"}, "y3": {"pct": 285.6, "price": "$221.22"} } }
+            ]
+        },
+        {
+            "etf": { "ticker": "VTV", "yahoo_ticker": "VTV", "name": "Value ETF", "desc": "대형 가치주 ETF", "strategy": "금융/에너지/가치", "value": "$155.40", "changes": { "today": {"pct": 0.4, "price": "$154.78"}, "d3": {"pct": 0.5, "price": "$154.62"}, "w1": {"pct": 1.2, "price": "$153.55"}, "m1": {"pct": 3.8, "price": "$149.71"}, "m3": {"pct": 7.5, "price": "$144.55"}, "m6": {"pct": 11.2, "price": "$139.75"}, "y1": {"pct": 16.5, "price": "$133.39"}, "y3": {"pct": 16.5, "price": "$133.39"} } },
+            "stocks": [
+                { "ticker": "BRK-B", "yahoo_ticker": "BRK-B", "name": "Berkshire H.", "value": "$415.80", "changes": { "today": {"pct": 0.4, "price": "$414.14"}, "d3": {"pct": 1.5, "price": "$409.66"}, "w1": {"pct": 2.1, "price": "$407.25"}, "m1": {"pct": 5.6, "price": "$393.75"}, "m3": {"pct": 12.5, "price": "$369.60"}, "m6": {"pct": 18.5, "price": "$350.97"}, "y1": {"pct": 28.5, "price": "$323.58"}, "y3": {"pct": 28.5, "price": "$323.58"} } },
+                { "ticker": "JPM", "yahoo_ticker": "JPM", "name": "JPMorgan", "value": "$195.50", "changes": { "today": {"pct": 0.7, "price": "$194.14"}, "d3": {"pct": 2.5, "price": "$190.73"}, "w1": {"pct": 3.8, "price": "$188.34"}, "m1": {"pct": 8.5, "price": "$180.28"}, "m3": {"pct": 18.5, "price": "$164.98"}, "m6": {"pct": 25.6, "price": "$155.65"}, "y1": {"pct": 38.5, "price": "$141.16"}, "y3": {"pct": 38.5, "price": "$141.16"} } },
+                { "ticker": "XOM", "yahoo_ticker": "XOM", "name": "Exxon Mobil", "value": "$115.30", "changes": { "today": {"pct": 0.5, "price": "$114.72"}, "d3": {"pct": -1.2, "price": "$116.70"}, "w1": {"pct": 1.8, "price": "$113.26"}, "m1": {"pct": 4.5, "price": "$110.33"}, "m3": {"pct": 6.8, "price": "$107.95"}, "m6": {"pct": 8.2, "price": "$106.56"}, "y1": {"pct": 12.5, "price": "$102.48"}, "y3": {"pct": 12.5, "price": "$102.48"} } }
+            ]
+        },
+        {
+            "etf": { "ticker": "USMV", "yahoo_ticker": "USMV", "name": "Min Vol ETF", "desc": "경기 방어주 ETF", "strategy": "저변동성/헬스/생필품", "value": "$78.20", "changes": { "today": {"pct": 0.2, "price": "$78.04"}, "d3": {"pct": -0.5, "price": "$78.59"}, "w1": {"pct": 1.1, "price": "$77.34"}, "m1": {"pct": 2.5, "price": "$76.29"}, "m3": {"pct": 5.2, "price": "$74.33"}, "m6": {"pct": 6.8, "price": "$73.22"}, "y1": {"pct": 8.5, "price": "$72.07"}, "y3": {"pct": 8.5, "price": "$72.07"} } },
+            "stocks": [
+                { "ticker": "JNJ", "yahoo_ticker": "JNJ", "name": "Johnson & Johnson", "value": "$155.20", "changes": { "today": {"pct": 0.1, "price": "$155.04"}, "d3": {"pct": 0.5, "price": "$154.42"}, "w1": {"pct": -0.8, "price": "$156.45"}, "m1": {"pct": 1.5, "price": "$152.90"}, "m3": {"pct": 3.2, "price": "$150.38"}, "m6": {"pct": 5.4, "price": "$147.24"}, "y1": {"pct": 6.8, "price": "$145.31"}, "y3": {"pct": 6.8, "price": "$145.31"} } },
+                { "ticker": "PG", "yahoo_ticker": "PG", "name": "Procter & Gamble", "value": "$160.40", "changes": { "today": {"pct": 0.3, "price": "$159.92"}, "d3": {"pct": 0.8, "price": "$159.12"}, "w1": {"pct": -0.5, "price": "$161.20"}, "m1": {"pct": 2.1, "price": "$157.09"}, "m3": {"pct": 4.5, "price": "$153.49"}, "m6": {"pct": 5.8, "price": "$151.60"}, "y1": {"pct": 9.2, "price": "$146.88"}, "y3": {"pct": 9.2, "price": "$146.88"} } },
+                { "ticker": "KO", "yahoo_ticker": "KO", "name": "Coca-Cola", "value": "$60.20", "changes": { "today": {"pct": 0.1, "price": "$60.14"}, "d3": {"pct": 0.5, "price": "$59.90"}, "w1": {"pct": -0.2, "price": "$60.32"}, "m1": {"pct": 1.2, "price": "$59.48"}, "m3": {"pct": 2.5, "price": "$58.73"}, "m6": {"pct": 4.2, "price": "$57.77"}, "y1": {"pct": 6.8, "price": "$56.36"}, "y3": {"pct": 6.8, "price": "$56.36"} } }
+            ]
+        }
+    ],
     "krSectors": [
         { "ticker": "KODEX 정보기술", "yahoo_ticker": "229200.KS", "name": "Technology", "desc": "정보기술", "value": "₩42,100", "changes": { "today": {"pct": 0.8, "price": "₩41,763"}, "d3": {"pct": -1.2, "price": "₩42,614"}, "w1": {"pct": 2.8, "price": "₩40,953"}, "m1": {"pct": 5.5, "price": "₩39,905"}, "m3": {"pct": 12.1, "price": "₩37,555"}, "m6": {"pct": 15.8, "price": "₩36,358"}, "y1": {"pct": 28.5, "price": "₩32,763"}, "y3": {"pct": 28.5, "price": "₩32,763"} } },
         { "ticker": "KODEX 반도체", "yahoo_ticker": "091160.KS", "name": "Semiconductors", "desc": "반도체", "value": "₩38,500", "changes": { "today": {"pct": 1.0, "price": "₩38,118"}, "d3": {"pct": -2.1, "price": "₩39,326"}, "w1": {"pct": 3.5, "price": "₩37,198"}, "m1": {"pct": 6.2, "price": "₩36,253"}, "m3": {"pct": 14.5, "price": "₩33,624"}, "m6": {"pct": 18.2, "price": "₩32,572"}, "y1": {"pct": 35.6, "price": "₩28,392"}, "y3": {"pct": 35.6, "price": "₩28,392"} } },
@@ -543,7 +569,37 @@ def fetch_and_cache_market_data():
         {"ticker": "VO", "name": "Mid Cap", "desc": "중형주", "capRange": "시가총액 70~85%", "topCompanies": "Smurfit WestRock, Williams-Sonoma, Deckers, Carlisle, Targa Resources"},
         {"ticker": "VB", "name": "Small Cap", "desc": "소형주", "capRange": "시가총액 하위 15%", "topCompanies": "Vaxcyte, Comfort Systems, FTAI Aviation, Sprouts Farmers, Saia"}
     ]
+    us_style = [
+        {
+            "etf": {"ticker": "VUG", "name": "Growth ETF", "desc": "대형 성장주 ETF", "strategy": "성장/기술/혁신"},
+            "stocks": [
+                {"ticker": "MSFT", "name": "Microsoft"},
+                {"ticker": "AAPL", "name": "Apple"},
+                {"ticker": "NVDA", "name": "NVIDIA"}
+            ]
+        },
+        {
+            "etf": {"ticker": "VTV", "name": "Value ETF", "desc": "대형 가치주 ETF", "strategy": "금융/에너지/가치"},
+            "stocks": [
+                {"ticker": "BRK-B", "name": "Berkshire H."},
+                {"ticker": "JPM", "name": "JPMorgan"},
+                {"ticker": "XOM", "name": "Exxon Mobil"}
+            ]
+        },
+        {
+            "etf": {"ticker": "USMV", "name": "Min Vol ETF", "desc": "경기 방어주 ETF", "strategy": "저변동성/헬스/생필품"},
+            "stocks": [
+                {"ticker": "JNJ", "name": "Johnson & Johnson"},
+                {"ticker": "PG", "name": "Procter & Gamble"},
+                {"ticker": "KO", "name": "Coca-Cola"}
+            ]
+        }
+    ]
     all_tickers = list(market_tickers.values()) + [s["ticker"] for s in us_sectors] + [s["ticker"] for s in kr_sectors] + [m["ticker"] for m in us_marketcap]
+    for item in us_style:
+        all_tickers.append(item["etf"]["ticker"])
+        for stock in item["stocks"]:
+            all_tickers.append(stock["ticker"])
     for c_list in company_tickers_full.values():
         all_tickers.extend([item[1] for item in c_list])
     unique_tickers = list(set(all_tickers))
@@ -639,6 +695,28 @@ def fetch_and_cache_market_data():
             ],
             "usSectors": [{"ticker": s["ticker"], "yahoo_ticker": s["ticker"], "name": s["name"], "desc": s["desc"], **process_ticker(s["ticker"], "usd")} for s in us_sectors],
             "usMarketCap": [{"ticker": m["ticker"], "yahoo_ticker": m["ticker"], "name": m["name"], "desc": m["desc"], "capRange": m["capRange"], "topCompanies": m["topCompanies"], **process_ticker(m["ticker"], "usd")} for m in us_marketcap],
+            "usStyle": [
+                {
+                    "etf": {
+                        "ticker": item["etf"]["ticker"],
+                        "yahoo_ticker": item["etf"]["ticker"],
+                        "name": item["etf"]["name"],
+                        "desc": item["etf"]["desc"],
+                        "strategy": item["etf"]["strategy"],
+                        **process_ticker(item["etf"]["ticker"], "usd")
+                    },
+                    "stocks": [
+                        {
+                            "ticker": stock["ticker"],
+                            "yahoo_ticker": stock["ticker"],
+                            "name": stock["name"],
+                            **process_ticker(stock["ticker"], "usd")
+                        }
+                        for stock in item["stocks"]
+                    ]
+                }
+                for item in us_style
+            ],
             "krSectors": [{"ticker": s["display"], "yahoo_ticker": s["ticker"], "name": s["name"], "desc": s["desc"], **process_ticker(s["ticker"], "krw")} for s in kr_sectors],
             "companiesBySector": {
                 sector: [{"name": item[0], "ticker": item[1].replace(".KS", ""), "yahoo_ticker": item[1], "logo": "", **process_ticker(item[1], "krw" if ".KS" in item[1] else "usd")} for item in t_list]
