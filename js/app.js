@@ -1,3 +1,8 @@
+// 브라우저의 이전 스크롤 위치 복원 기능 비활성화 (항상 최상단 로드)
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+
 let mockData = null; 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -5,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusDisplay = document.getElementById('base-date-display');
     if (statusDisplay) statusDisplay.innerText = '연결 중...';
     
+    // 페이지 진입 시 스크롤 최상단 강제 이동
+    window.scrollTo(0, 0);
     fetchMarketData();
 });
 
@@ -39,6 +46,9 @@ async function fetchMarketData() {
         renderSectors();
         renderCompanies();
         
+        // 데이터 렌더링이 끝난 직후 스크롤을 맨 위로 고정
+        window.scrollTo(0, 0);
+        
     } catch (err) {
         console.error("Fetch Error:", err);
         if (statusDisplay) statusDisplay.innerText = '연결 실패 - 재시도 중...';
@@ -46,6 +56,8 @@ async function fetchMarketData() {
     } finally {
         const ol = document.getElementById('loading-overlay');
         if (ol) ol.remove();
+        // 오버레이가 사라지고 리플로우가 끝난 직후 강제로 최상단 고정
+        setTimeout(() => window.scrollTo(0, 0), 50);
     }
 }
 
