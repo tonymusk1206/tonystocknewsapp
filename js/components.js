@@ -23,6 +23,9 @@ function getPercentClass(data) {
 
 function createMarketCard(market) {
     if (!mockData) return '';
+    const isKr = market.region === '한국';
+    const dates = isKr ? mockData.dates.kr : mockData.dates.us;
+
     const renderMetric = (label, date, change) => `
         <div class="metric-box">
             <span class="metric-label">${label}<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${date})</span></span>
@@ -40,7 +43,8 @@ function createMarketCard(market) {
             </div>
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${mockData.dates.current})</span></span>
+                    ${market.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
+                    <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${dates.current})</span></span>
                     <div class="metric-content">
                         <span class="metric-pct ${getPercentClass(market.changes.today)}" style="margin-bottom: 2px;">
                             ${market.changes.today.pct > 0 ? '▲' : market.changes.today.pct < 0 ? '▼' : ''} ${Math.abs(market.changes.today.pct)}%
@@ -48,13 +52,13 @@ function createMarketCard(market) {
                         <span class="metric-value highlight">${market.value}</span>
                     </div>
                 </div>
-                ${renderMetric('3일전比', mockData.dates.d3, market.changes.d3)}
-                ${renderMetric('1주전比', mockData.dates.w1, market.changes.w1)}
-                ${renderMetric('1달전比', mockData.dates.m1, market.changes.m1)}
-                ${renderMetric('3달전比', mockData.dates.m3, market.changes.m3)}
-                ${renderMetric('6달전比', mockData.dates.m6, market.changes.m6)}
-                ${renderMetric('1년전比', mockData.dates.y1, market.changes.y1)}
-                ${renderMetric('3년전比', mockData.dates.y3, market.changes.y3)}
+                ${renderMetric('3일전比', dates.d3, market.changes.d3)}
+                ${renderMetric('1주전比', dates.w1, market.changes.w1)}
+                ${renderMetric('1달전比', dates.m1, market.changes.m1)}
+                ${renderMetric('3달전比', dates.m3, market.changes.m3)}
+                ${renderMetric('6달전比', dates.m6, market.changes.m6)}
+                ${renderMetric('1년전比', dates.y1, market.changes.y1)}
+                ${renderMetric('3년전比', dates.y3, market.changes.y3)}
             </div>
         </div>
     `;
@@ -103,15 +107,18 @@ function renderMarkets() {
 }
 
 // 2. 한/미 섹터별 등락 렌더링
-function createSectorTableHTML(sectors) {
+function createSectorTableHTML(sectors, region) {
     if (!mockData) return '';
+    const dates = region === 'kr' ? mockData.dates.kr : mockData.dates.us;
+
     let rows = sectors.map(sector => `
         <tr onclick="window.open('https://finance.yahoo.com/quote/' + '${sector.yahoo_ticker}', '_blank')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
             <td>
                 <div class="ticker-name">${sector.name} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-secondary);">(${sector.desc})</span></div>
                 <span class="ticker-desc" style="display: block; margin-top: 4px; color: var(--text-muted); font-size: 0.8em; font-weight: 500;">(${sector.ticker})</span>
             </td>
-            <td style="font-weight: 600;">
+            <td style="font-weight: 600; position: relative; overflow: visible;">
+                ${sector.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
                 <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(sector.changes.today, true)}</div>
                 <div style="font-size: 1rem;">${sector.value}</div>
             </td>
@@ -140,14 +147,14 @@ function createSectorTableHTML(sectors) {
         <thead>
             <tr>
                 <th style="text-align:left;">자산 (ETF)</th>
-                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
-                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
-                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
-                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
-                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
-                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
-                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
-                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y3})</span></th>
+                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.current})</span></th>
+                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.d3})</span></th>
+                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.w1})</span></th>
+                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m1})</span></th>
+                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m3})</span></th>
+                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m6})</span></th>
+                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.y1})</span></th>
+                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.y3})</span></th>
             </tr>
         </thead>
         <tbody>
@@ -159,8 +166,8 @@ function createSectorTableHTML(sectors) {
 function renderSectors() {
     if (!mockData) return;
     document.getElementById('sector-title').innerText = `📊 섹터별 성과 분석 (${mockData.baseDate})`;
-    document.getElementById('us-sectors-table').innerHTML = createSectorTableHTML(mockData.usSectors);
-    document.getElementById('kr-sectors-table').innerHTML = createSectorTableHTML(mockData.krSectors);
+    document.getElementById('us-sectors-table').innerHTML = createSectorTableHTML(mockData.usSectors, 'us');
+    document.getElementById('kr-sectors-table').innerHTML = createSectorTableHTML(mockData.krSectors, 'kr');
     // 미국 시가총액 분류별 추이
     if (mockData.usMarketCap) {
         document.getElementById('us-marketcap-table').innerHTML = createMarketCapTableHTML(mockData.usMarketCap);
@@ -174,6 +181,8 @@ function renderSectors() {
 // 미국 시가총액 분류별 추이 테이블
 function createMarketCapTableHTML(caps) {
     if (!mockData) return '';
+    const dates = mockData.dates.us;
+
     let rows = caps.map(cap => `
         <tr onclick="window.open('https://finance.yahoo.com/quote/' + '${cap.yahoo_ticker}', '_blank')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
             <td>
@@ -181,7 +190,8 @@ function createMarketCapTableHTML(caps) {
                 <span class="ticker-desc" style="display: block; margin-top: 3px; color: var(--accent-brand); font-size: 0.85em; font-weight: 600;">${cap.ticker}</span>
                 <span style="display: block; margin-top: 3px; color: var(--text-muted); font-size: 0.75em; line-height: 1.3;">대표: ${cap.topCompanies}</span>
             </td>
-            <td style="font-weight: 600;">
+            <td style="font-weight: 600; position: relative; overflow: visible;">
+                ${cap.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
                 <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(cap.changes.today, true)}</div>
                 <div style="font-size: 1rem;">${cap.value}</div>
             </td>
@@ -210,14 +220,14 @@ function createMarketCapTableHTML(caps) {
         <thead>
             <tr>
                 <th style="text-align:left;">분류 (ETF)</th>
-                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
-                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
-                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
-                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
-                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
-                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
-                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
-                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y3})</span></th>
+                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.current})</span></th>
+                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.d3})</span></th>
+                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.w1})</span></th>
+                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m1})</span></th>
+                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m3})</span></th>
+                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m6})</span></th>
+                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.y1})</span></th>
+                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.y3})</span></th>
             </tr>
         </thead>
         <tbody>
@@ -227,6 +237,9 @@ function createMarketCapTableHTML(caps) {
 }
 
 function createCompanyCard(company) {
+    const isKr = company.ticker && !isNaN(company.ticker[0]);
+    const dates = isKr ? mockData.dates.kr : mockData.dates.us;
+
     const renderMetric = (label, date, change) => `
         <div class="metric-box">
             <span class="metric-label">${label}<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${date})</span></span>
@@ -249,7 +262,8 @@ function createCompanyCard(company) {
             
             <div class="company-metrics">
                 <div class="metric-box current-box">
-                    <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${mockData.dates.current})</span></span>
+                    ${company.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
+                    <span class="metric-label">현재가<br/><span style="font-size: 0.85em; font-weight: normal; color: #94a3b8;">(${dates.current})</span></span>
                     <div class="metric-content">
                         <span class="metric-pct ${getPercentClass(company.changes.today)}" style="margin-bottom: 2px;">
                             ${company.changes.today.pct > 0 ? '▲' : company.changes.today.pct < 0 ? '▼' : ''} ${Math.abs(company.changes.today.pct)}%
@@ -257,13 +271,13 @@ function createCompanyCard(company) {
                         <span class="metric-value highlight">${company.value}</span>
                     </div>
                 </div>
-                ${renderMetric('3일전比', mockData.dates.d3, company.changes.d3)}
-                ${renderMetric('1주전比', mockData.dates.w1, company.changes.w1)}
-                ${renderMetric('1개월전比', mockData.dates.m1, company.changes.m1)}
-                ${renderMetric('3개월전比', mockData.dates.m3, company.changes.m3)}
-                ${renderMetric('6개월전比', mockData.dates.m6, company.changes.m6)}
-                ${renderMetric('1년전比', mockData.dates.y1, company.changes.y1)}
-                ${renderMetric('3년전比', mockData.dates.y3, company.changes.y3)}
+                ${renderMetric('3일전比', dates.d3, company.changes.d3)}
+                ${renderMetric('1주전比', dates.w1, company.changes.w1)}
+                ${renderMetric('1개월전比', dates.m1, company.changes.m1)}
+                ${renderMetric('3개월전比', dates.m3, company.changes.m3)}
+                ${renderMetric('6개월전比', dates.m6, company.changes.m6)}
+                ${renderMetric('1년전比', dates.y1, company.changes.y1)}
+                ${renderMetric('3년전比', dates.y3, company.changes.y3)}
             </div>
         </div>
     `;
@@ -598,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 미국 투자 스타일 및 대표 주식 추이 테이블 렌더러
 function createStyleTableHTML(styles) {
     if (!mockData) return '';
+    const dates = mockData.dates.us;
     let rows = [];
     
     styles.forEach(item => {
@@ -611,7 +626,8 @@ function createStyleTableHTML(styles) {
                     <div class="ticker-name" style="font-weight: 700; color: var(--accent-brand);">${etf.desc} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-secondary);">(${etf.strategy})</span></div>
                     <span class="ticker-desc" style="display: block; margin-top: 3px; color: var(--text-muted); font-size: 0.85em; font-weight: 600;">${etf.ticker}</span>
                 </td>
-                <td style="font-weight: 600;">
+                <td style="font-weight: 600; position: relative; overflow: visible;">
+                    ${etf.pending ? `<div class="pending-tooltip">전일 데이터 반영중</div>` : ''}
                     <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(etf.changes.today, true)}</div>
                     <div style="font-size: 1rem;">${etf.value}</div>
                 </td>
@@ -639,7 +655,8 @@ function createStyleTableHTML(styles) {
                         </div>
                         <span class="ticker-desc" style="display: block; margin-left: 12px; margin-top: 2px; color: var(--text-muted); font-size: 0.78em;">${stock.ticker}</span>
                     </td>
-                    <td style="font-size: 0.95rem;">
+                    <td style="font-size: 0.95rem; position: relative; overflow: visible;">
+                        ${stock.pending ? `<div class="pending-tooltip" style="bottom: 110%;">전일 데이터 반영중</div>` : ''}
                         <div style="margin-bottom: 2px;">${formatPercent(stock.changes.today, true)}</div>
                         <div style="color: var(--text-secondary); font-size: 0.9em;">${stock.value}</div>
                     </td>
@@ -670,14 +687,14 @@ function createStyleTableHTML(styles) {
         <thead>
             <tr>
                 <th style="text-align:left;">스타일 (ETF / 대표주)</th>
-                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
-                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
-                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
-                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
-                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m3})</span></th>
-                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m6})</span></th>
-                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y1})</span></th>
-                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.y3})</span></th>
+                <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.current})</span></th>
+                <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.d3})</span></th>
+                <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.w1})</span></th>
+                <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m1})</span></th>
+                <th>3달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m3})</span></th>
+                <th>6달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.m6})</span></th>
+                <th>1년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.y1})</span></th>
+                <th>3년전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${dates.y3})</span></th>
             </tr>
         </thead>
         <tbody>

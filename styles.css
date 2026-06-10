@@ -1075,3 +1075,52 @@ h3 {
     }
 }
 
+/* ── 전일 데이터 반영중 툴팁 (말풍선) 프리미엄 스타일 ── */
+.current-box {
+    position: relative;
+}
+
+.pending-container {
+    position: relative;
+    display: inline-block;
+}
+
+.pending-tooltip {
+    position: absolute;
+    bottom: 125%; /* 위쪽으로 띄움 */
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f59e0b; /* 눈에 띄도록 호버 오렌지/옐로우 계열 사용 */
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.7);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 10px rgba(245, 158, 11, 0.2);
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    animation: tooltipBounce 1.8s infinite ease-in-out;
+}
+
+/* 말풍선 꼬리 */
+.pending-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(245, 158, 11, 0.7) transparent transparent transparent;
+}
+
+@keyframes tooltipBounce {
+    0%, 100% {
+        transform: translate(-50%, 0);
+    }
+    50% {
+        transform: translate(-50%, -4px);
+    }
+}

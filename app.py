@@ -27,8 +27,14 @@ base_dt = datetime.now().strftime("%Y.%m.%d")
 FALLBACK_DATA = {
     "baseDate": "서버 초기화 중 (최초 1회 수집 진행 중...)",
     "dates": {
-        "current": "현재가", "d3": "3일전", "w1": "1주전",
-        "m1": "1달전", "m3": "3달전", "m6": "6달전", "y1": "1년전", "y3": "3년전"
+        "us": {
+            "current": "현재가", "d3": "3일전", "w1": "1주전",
+            "m1": "1달전", "m3": "3달전", "m6": "6달전", "y1": "1년전", "y3": "3년전"
+        },
+        "kr": {
+            "current": "현재가", "d3": "3일전", "w1": "1주전",
+            "m1": "1달전", "m3": "3달전", "m6": "6달전", "y1": "1년전", "y3": "3년전"
+        }
     },
     "markets": [
         { "name": "S&P 500", "region": "미국", "ticker": "SPX", "yahoo_ticker": "^GSPC", "value": "5,123.41", "changes": { "today": {"pct": 0.8, "price": "5,082.50"}, "d3": {"pct": -0.5, "price": "5,148.91"}, "w1": {"pct": 2.1, "price": "5,018.23"}, "m1": {"pct": 5.4, "price": "4,861.42"}, "m3": {"pct": 12.3, "price": "4,562.18"}, "m6": {"pct": 15.6, "price": "4,431.25"}, "y1": {"pct": 24.5, "price": "4,115.52"}, "y3": {"pct": 24.5, "price": "4,115.52"} } },
@@ -653,9 +659,17 @@ def fetch_and_cache_market_data():
         def process_ticker(t_sym, symbol_type="usd"):
             empty_changes = {k: {"pct": 0, "price": "N/A"} for k in ["today", "d3", "w1", "m1", "m3", "m6", "y1", "y3"]}
             try:
-                if data.empty or t_sym not in data.columns.levels[0]: return {"value": "N/A", "changes": empty_changes}
-                hist = data[t_sym].dropna(subset=['Close'])
-                if hist.empty: return {"value": "N/A", "changes": empty_changes}
+                if data.empty or t_sym not in data.columns.levels[0]: return {"value": "N/A", "pending": False, "changes": empty_changes}
+                raw_ticker_data = data[t_sym]
+                latest_raw_date = raw_ticker_data.index[-1]
+                hist = raw_ticker_data.dropna(subset=['Close'])
+                if hist.empty: return {"value": "N/A", "pending": False, "changes": empty_changes}
+                
+                latest_valid_date = hist.index[-1]
+                pending = False
+                if latest_valid_date and latest_raw_date > latest_valid_date:
+                    pending = True
+                
                 daily_close = float(hist['Close'].iloc[-1])
                 current_close = realtime_prices.get(t_sym, daily_close)
                 def format_price(p):
@@ -664,25 +678,46 @@ def fetch_and_cache_market_data():
                     elif symbol_type == "idx": return f"{p:,.2f}"
                     else: return f"${p:,.2f}"
                 raw_changes = calculate_changes(hist, current_close)
-                return {"value": format_price(current_close), "changes": {k: {"pct": v["pct"], "price": format_price(v["raw_price"])} for k, v in raw_changes.items()}}
+                return {"value": format_price(current_close), "pending": pending, "changes": {k: {"pct": v["pct"], "price": format_price(v["raw_price"])} for k, v in raw_changes.items()}}
             except:
-                return {"value": "N/A", "changes": empty_changes}
-        # 실제 거래일 기준 날짜 추출 (SPX hist 기반)
-        def trading_date(days_ago):
-            if spx_hist is None or spx_hist.empty: return ""
-            idx = min(days_ago, len(spx_hist)-1)
-            return spx_hist.index[-1 - idx].strftime('%y.%m.%d')
+                return {"value": "N/A", "pending": False, "changes": empty_changes}
+        # 실제 거래일 기준 날짜 추출 (결측치 없는 원본 기준)
+        spx_raw = data["^GSPC"] if "^GSPC" in data.columns.levels[0] else None
+        kospi_raw = data["^KS11"] if "^KS11" in data.columns.levels[0] else None
+
+        def us_trading_date(days_ago):
+            if spx_raw is None or spx_raw.empty: return ""
+            idx = min(days_ago, len(spx_raw)-1)
+            return spx_raw.index[-1 - idx].strftime('%y.%m.%d')
+
+        def kr_trading_date(days_ago):
+            if kospi_raw is None or kospi_raw.empty: return ""
+            idx = min(days_ago, len(kospi_raw)-1)
+            return kospi_raw.index[-1 - idx].strftime('%y.%m.%d')
+
         result = {
             "baseDate": f"{datetime.now().strftime('%Y년 %m월 %d일 %H:%M')} 라이브 API 기준",
             "dates": {
-                "current": trading_date(0) or "현재가",
-                "d3": trading_date(3),
-                "w1": trading_date(5),
-                "m1": trading_date(21),
-                "m3": trading_date(63),
-                "m6": trading_date(126),
-                "y1": trading_date(252),
-                "y3": trading_date(756)
+                "us": {
+                    "current": us_trading_date(0) or "현재가",
+                    "d3": us_trading_date(3),
+                    "w1": us_trading_date(5),
+                    "m1": us_trading_date(21),
+                    "m3": us_trading_date(63),
+                    "m6": us_trading_date(126),
+                    "y1": us_trading_date(252),
+                    "y3": us_trading_date(756)
+                },
+                "kr": {
+                    "current": kr_trading_date(0) or "현재가",
+                    "d3": kr_trading_date(3),
+                    "w1": kr_trading_date(5),
+                    "m1": kr_trading_date(21),
+                    "m3": kr_trading_date(63),
+                    "m6": kr_trading_date(126),
+                    "y1": kr_trading_date(252),
+                    "y3": kr_trading_date(756)
+                }
             },
             "markets": [
                 {"name": "S&P 500", "region": "미국", "ticker": "SPX", "yahoo_ticker": "^GSPC", **process_ticker("^GSPC", "idx")},
@@ -941,7 +976,33 @@ def market_data():
         cached = dict(data_cache["data"])
         return jsonify(cached)
     # ★ 서버 최초 기동 직후 캐시가 없으면 fallback 즉시 반환
-    return jsonify(FALLBACK_DATA)
+    # Fallback 데이터에 pending: False 주입하여 응답 안정성 강화
+    fallback_copy = json.loads(json.dumps(FALLBACK_DATA))
+    
+    # markets
+    for m in fallback_copy.get("markets", []):
+        m["pending"] = False
+    # usSectors
+    for s in fallback_copy.get("usSectors", []):
+        s["pending"] = False
+    # usMarketCap
+    for mc in fallback_copy.get("usMarketCap", []):
+        mc["pending"] = False
+    # usStyle
+    for style in fallback_copy.get("usStyle", []):
+        if "etf" in style:
+            style["etf"]["pending"] = False
+        for stock in style.get("stocks", []):
+            stock["pending"] = False
+    # krSectors
+    for s in fallback_copy.get("krSectors", []):
+        s["pending"] = False
+    # companiesBySector
+    for sector, companies in fallback_copy.get("companiesBySector", {}).items():
+        for c in companies:
+            c["pending"] = False
+            
+    return jsonify(fallback_copy)
 
 # ── /api/search 엔드포인트 ──
 @app.route('/api/search')
