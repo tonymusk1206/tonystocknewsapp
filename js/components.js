@@ -48,7 +48,6 @@ function createMarketCard(market) {
                         <span class="metric-value highlight">${market.value}</span>
                     </div>
                 </div>
-                ${renderMetric('1일전比', mockData.dates.d1, market.changes.d1)}
                 ${renderMetric('3일전比', mockData.dates.d3, market.changes.d3)}
                 ${renderMetric('1주전比', mockData.dates.w1, market.changes.w1)}
                 ${renderMetric('1달전比', mockData.dates.m1, market.changes.m1)}
@@ -115,7 +114,6 @@ function createSectorTableHTML(sectors) {
                 <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(sector.changes.today, true)}</div>
                 <div style="font-size: 1rem;">${sector.value}</div>
             </td>
-            <td>${formatPercent(sector.changes.d1)}</td>
             <td>${formatPercent(sector.changes.d3)}</td>
             <td>${formatPercent(sector.changes.w1)}</td>
             <td>${formatPercent(sector.changes.m1)}</td>
@@ -127,21 +125,19 @@ function createSectorTableHTML(sectors) {
 
     return `
         <colgroup>
-            <col style="width: 18%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
+            <col style="width: 20%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
         </colgroup>
         <thead>
             <tr>
                 <th style="text-align:left;">자산 (ETF)</th>
                 <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
-                <th>1일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d1})</span></th>
                 <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
                 <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
                 <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
@@ -181,7 +177,6 @@ function createMarketCapTableHTML(caps) {
                 <div style="font-weight: 500; margin-bottom: 4px;">${formatPercent(cap.changes.today, true)}</div>
                 <div style="font-size: 1rem;">${cap.value}</div>
             </td>
-            <td>${formatPercent(cap.changes.d1)}</td>
             <td>${formatPercent(cap.changes.d3)}</td>
             <td>${formatPercent(cap.changes.w1)}</td>
             <td>${formatPercent(cap.changes.m1)}</td>
@@ -193,21 +188,19 @@ function createMarketCapTableHTML(caps) {
 
     return `
         <colgroup>
-            <col style="width: 18%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
-            <col style="width: 10.25%;">
+            <col style="width: 20%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
+            <col style="width: 11.4%;">
         </colgroup>
         <thead>
             <tr>
                 <th style="text-align:left;">분류 (ETF)</th>
                 <th>현재가<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.current})</span></th>
-                <th>1일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d1})</span></th>
                 <th>3일전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.d3})</span></th>
                 <th>1주전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.w1})</span></th>
                 <th>1달전比<br/><span style="font-size:0.78em;font-weight:normal;color:#94a3b8;">(${mockData.dates.m1})</span></th>
@@ -253,7 +246,6 @@ function createCompanyCard(company) {
                         <span class="metric-value highlight">${company.value}</span>
                     </div>
                 </div>
-                ${renderMetric('1일전比', mockData.dates.d1, company.changes.d1)}
                 ${renderMetric('3일전比', mockData.dates.d3, company.changes.d3)}
                 ${renderMetric('1주전比', mockData.dates.w1, company.changes.w1)}
                 ${renderMetric('1개월전比', mockData.dates.m1, company.changes.m1)}
